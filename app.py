@@ -42,8 +42,10 @@ HAVE_KEYS = all(fetch.get_credentials())
 
 
 def add_basemaps(m):
+    # carto tiles now want an API key, so plain map = openstreetmap.
+    # show=False so the satellite one is the one you see first
     folium.TileLayer(ESRI_SAT, attr=ESRI_ATTR, name="Satellite", overlay=False).add_to(m)
-    folium.TileLayer("CartoDB positron", name="Plain map", overlay=False).add_to(m)
+    folium.TileLayer("OpenStreetMap", name="Plain map", overlay=False, show=False).add_to(m)
     folium.TileLayer(ESRI_LABELS, attr=ESRI_ATTR, name="Place names", overlay=True, control=True).add_to(m)
 
 
@@ -224,7 +226,7 @@ with tab_scan:
             det.add_to(m)
 
         plugins.Fullscreen(position="topright").add_to(m)
-        plugins.MousePosition(position="bottomleft", separator=" , ", num_digits=3, prefix="lat, lon:",
+        plugins.MousePosition(position="bottomleft", separator=" , ", num_digits=3, prefix="lat, lon:", empty_string="",
                               lat_formatter="function(n){return n.toFixed(3)}",
                               lng_formatter="function(n){return n.toFixed(3)}").add_to(m)
         folium.LayerControl(collapsed=True).add_to(m)

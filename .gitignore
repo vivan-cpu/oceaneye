@@ -3,3 +3,4 @@ cache/
 __pycache__/
 *_result.png
 *_result.geojson
+.venv/

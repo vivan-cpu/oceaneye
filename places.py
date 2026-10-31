@@ -37,6 +37,6 @@ PLACES = {
     "Custom area": {
         "bbox": (72.0, 18.5, 72.6, 19.0),
         "from": "2026-10-01", "to": "2026-10-30",
-        "note": "Type your own box below.",
+        "note": "Draw your own box on the map.",
     },
 }
