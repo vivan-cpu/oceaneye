@@ -1,4 +1,4 @@
-# OilWatch
+# OceanEye
 
 Spotting oil spills at sea from free satellite radar images.
 YCL 2026 (Plaksha University) - theme: **Water Security**

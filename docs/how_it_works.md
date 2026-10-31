@@ -1,4 +1,4 @@
-# How OilWatch works (and what to say when the panel asks)
+# How OceanEye works (and what to say when the panel asks)
 
 ## The problem
 

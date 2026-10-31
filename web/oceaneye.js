@@ -1,4 +1,4 @@
-// oilwatch.js - same detection as detect.py, but in javascript so it runs in the browser.
+// oceaneye.js - same detection as detect.py, but in javascript so it runs in the browser.
 // (github pages can't run python, so we rewrote it)
 // img = { db: Float32Array (NaN = no data), w, h, pxKm (pixel width in km), pxKm2 (pixel area) }
 
@@ -330,5 +330,5 @@
 
   const api = { SETTINGS, analyse, testScene, toDb };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
-  else root.OilWatch = api;
+  else root.OceanEye = api;
 })(this);

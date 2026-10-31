@@ -52,7 +52,7 @@ void showScreen(const char *status, float mean, float rough) {
   oled.clearDisplay();
   oled.setTextSize(1);
   oled.setCursor(0, 0);
-  oled.print("OilWatch tank  fan:");
+  oled.print("OceanEye tank  fan:");
   oled.print(fanOn ? "ON" : "OFF");
   oled.setCursor(0, 12);
   oled.print("light "); oled.print((int)mean);

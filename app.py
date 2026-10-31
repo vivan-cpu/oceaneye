@@ -1,5 +1,5 @@
 """
-OilWatch - spotting oil spills from space with free Sentinel-1 radar images
+OceanEye - spotting oil spills from space with free Sentinel-1 radar images
 
 run it with:
     streamlit run app.py
@@ -23,7 +23,7 @@ import detect
 import fetch
 from places import PLACES
 
-st.set_page_config(page_title="OilWatch", page_icon="🛰", layout="wide")
+st.set_page_config(page_title="OceanEye", page_icon="🛰", layout="wide")
 
 st.markdown("""
 <style>
@@ -73,7 +73,7 @@ def on_place_change():
 
 
 # ---------------- header ----------------
-st.title("🛰 OilWatch")
+st.title("🛰 OceanEye")
 st.caption("Spotting oil spills at sea with free Sentinel-1 radar images · YCL 2026 · Water Security")
 
 tab_scan, tab_how = st.tabs(["Scan the sea", "How it works"])
@@ -336,10 +336,10 @@ with tab_scan:
                      column_config={"why": st.column_config.TextColumn(width="large")})
         d1, d2, d3 = st.columns(3)
         d1.download_button("⬇ GeoJSON (Google Earth / QGIS)", json.dumps(out["geojson"]),
-                           file_name="oilwatch_detections.geojson", width="stretch")
-        d2.download_button("⬇ Table (CSV)", df.to_csv(index=False), file_name="oilwatch_detections.csv",
+                           file_name="oceaneye_detections.geojson", width="stretch")
+        d2.download_button("⬇ Table (CSV)", df.to_csv(index=False), file_name="oceaneye_detections.csv",
                            width="stretch")
-        d3.download_button("⬇ Picture (PNG)", out["png"], file_name="oilwatch_result.png", width="stretch")
+        d3.download_button("⬇ Picture (PNG)", out["png"], file_name="oceaneye_result.png", width="stretch")
     else:
         st.success("No dark patches that look like oil.")
 

@@ -29,7 +29,7 @@
     if (!current) return;
     status(`analysing ${current.w}×${current.h} pixels...`);
     const t0 = performance.now();
-    const res = await later(() => OilWatch.analyse(current, settings()));
+    const res = await later(() => OceanEye.analyse(current, settings()));
     draw(current, res);
     table(res);
     $("warnings").innerHTML = res.warnings.map(w => `<p class="warn">${w}</p>`).join("");
@@ -98,7 +98,7 @@
   // ---- buttons ----
   $("btn-test").addEventListener("click", async () => {
     status("making the test scene...");
-    current = await later(() => OilWatch.testScene());
+    current = await later(() => OceanEye.testScene());
     run();
   });
   $("btn-rerun").addEventListener("click", run);
@@ -150,7 +150,7 @@
     for (let i = 0; i < w * h; i++) {
       let v = band[i];
       const bad = !Number.isFinite(v) || v === nodata || (mask && mask[i] === 0) || (!isDb && v <= 0);
-      db[i] = bad ? NaN : (isDb ? v : OilWatch.toDb(v));
+      db[i] = bad ? NaN : (isDb ? v : OceanEye.toDb(v));
     }
 
     // big images are slow in a browser, so shrink by averaging blocks
@@ -165,7 +165,7 @@
               const v = db[(y * f + dy) * w + x * f + dx];
               if (Number.isFinite(v)) { s += Math.pow(10, v / 10); n++; }
             }
-          out[y * W + x] = n > f * f / 2 ? OilWatch.toDb(s / n) : NaN;
+          out[y * W + x] = n > f * f / 2 ? OceanEye.toDb(s / n) : NaN;
         }
       db = out; w = W; h = H; pxW *= f; pxH *= f;
     }
