@@ -3,7 +3,12 @@
 Spotting oil spills at sea from free satellite radar images.
 YCL 2026 (Plaksha University) - theme: **Water Security**
 
-Team: _(add names)_  ·  School: _(add)_
+Team **OceanEye** · The Galaxy School, Wadi, Rajkot (Gujarat)
+
+- Rian Palan - team leader
+- Nivaan Alex - presenter
+- Vivan Sojitra - researcher
+- Mentor: Toral Dwivedi
 
 **Website (try it in your browser):** https://vivan-cpu.github.io/oilwatch/
 
