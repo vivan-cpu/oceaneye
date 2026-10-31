@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OilWatch - spotting oil spills from space</title>
+<meta name="description" content="A YCL 2026 student project: finding oil spills at sea using free Sentinel-1 radar satellite images.">
+<link rel="stylesheet" href="web/style.css">
+</head>
+<body>
+
+<header>
+  <p class="tag">YCL 2026 &middot; Plaksha University &middot; Theme: Water Security</p>
+  <h1>OilWatch</h1>
+  <p class="sub">Finding oil spills at sea using free radar images from the Sentinel-1 satellite.</p>
+  <nav>
+    <a href="#problem">Problem</a>
+    <a href="#science">Science</a>
+    <a href="#try">Try it</a>
+    <a href="#method">Method</a>
+    <a href="#testing">Testing</a>
+    <a href="#limits">Limits</a>
+    <a href="#code">Code</a>
+  </nav>
+</header>
+
+<main>
+
+<section id="problem">
+  <h2>The problem</h2>
+  <p>On 25 May 2025 the container ship <b>MSC ELSA 3</b> sank about 14 nautical miles off Alappuzha, Kerala,
+  with around 84 tonnes of diesel and 367 tonnes of fuel oil on board. It was monsoon season. Normal satellite
+  photos were mostly cloud, so the Coast Guard had to send aircraft to look for the slick.</p>
+  <p>Big accidents are only part of it. A lot of oil at sea comes from ships illegally washing out their tanks,
+  often at night and far from shore, where nobody sees it.</p>
+  <p>Oil kills fish, birds and coral. It shuts down fishing for weeks, and coastal fishing families
+  are hit first. Clean coastal water is part of water security.</p>
+  <p class="q">Our question: <i>can a student team find oil spills using only free satellite data and a laptop?</i></p>
+</section>
+
+<section id="science">
+  <h2>How a radar satellite sees oil</h2>
+  <div class="two">
+    <div>
+      <p>Sentinel-1 (run by ESA) is a <b>radar</b> satellite. It sends microwaves down at a slant and
+      measures the echo. It makes its own signal, so it works <b>at night and through clouds</b>.</p>
+      <p>Wind makes small ripples on the sea, a few centimetres long. Those ripples scatter the radar back
+      to the satellite, so normal sea looks <b>grey</b>.</p>
+      <p>Oil makes a thin film that flattens those ripples. Smooth water acts like a mirror and bounces the
+      beam away. Almost no echo comes back, so <b>oil looks dark</b>.</p>
+      <p class="small">Benjamin Franklin noticed the same thing in 1773, when a spoonful of oil calmed the
+      ripples on a whole windy pond in London.</p>
+    </div>
+    <figure>
+      <svg viewBox="0 0 320 230" role="img" aria-label="Diagram: radar echo from rough sea vs oil">
+        <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <rect x="135" y="8" width="50" height="18" rx="2"/>
+          <line x1="110" y1="17" x2="135" y2="17"/><line x1="185" y1="17" x2="210" y2="17"/>
+          <!-- beams -->
+          <line x1="150" y1="28" x2="70" y2="160" stroke-dasharray="5 4"/>
+          <line x1="170" y1="28" x2="245" y2="160" stroke-dasharray="5 4"/>
+          <!-- echo back from rough sea -->
+          <path d="M78 150 Q110 95 145 32" stroke="#2a7a3a" stroke-width="2"/>
+          <!-- mirror bounce off oil -->
+          <line x1="245" y1="160" x2="312" y2="95" stroke="#b33"/>
+        </g>
+        <path d="M10 170 q8 -9 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <line x1="160" y1="170" x2="312" y2="170" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="190" y="166" width="110" height="5" fill="#333" opacity=".75"/>
+        <text x="216" y="21" font-size="11" fill="currentColor">Sentinel-1</text>
+        <text x="20" y="195" font-size="11" fill="currentColor">ripples (wind)</text>
+        <text x="20" y="210" font-size="11" fill="#2a7a3a">echo comes back</text>
+        <text x="20" y="225" font-size="11" fill="currentColor">= grey</text>
+        <text x="190" y="195" font-size="11" fill="currentColor">oil film = smooth</text>
+        <text x="190" y="210" font-size="11" fill="#b33">bounces away</text>
+        <text x="190" y="225" font-size="11" fill="currentColor">= dark</text>
+      </svg>
+      <figcaption>Rough sea sends the echo back, oil reflects it away.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="try">
+  <h2>Try it</h2>
+  <p>This runs the detection right here in your browser (nothing is uploaded anywhere).
+  Use our simulated test scene, or upload a Sentinel-1 VV image as a GeoTIFF
+  (<a href="#get-image">how to get one</a>).</p>
+
+  <div class="controls">
+    <button id="btn-test">Run on test scene</button>
+    <label class="file">Upload GeoTIFF <input type="file" id="file" accept=".tif,.tiff"></label>
+    <details>
+      <summary>Settings</summary>
+      <label>How much darker than the sea (dB): <output id="o-contrast">3.0</output>
+        <input type="range" id="contrast" min="1.5" max="8" step="0.5" value="3"></label>
+      <label>Smallest patch (km²): <output id="o-minarea">0.05</output>
+        <input type="range" id="minarea" min="0.01" max="2" step="0.01" value="0.05"></label>
+      <label>Background window (km): <output id="o-bg">3.0</output>
+        <input type="range" id="bgkm" min="1" max="10" step="0.5" value="3"></label>
+      <button id="btn-rerun" disabled>Run again</button>
+    </details>
+  </div>
+
+  <p id="status" class="status">No image loaded yet.</p>
+  <div id="warnings"></div>
+
+  <div class="viewer">
+    <figure><canvas id="cv-radar"></canvas><figcaption>Radar image (dark = smooth water)</figcaption></figure>
+    <figure><canvas id="cv-result"></canvas><figcaption>
+      Detections: <span class="k red">likely oil</span> <span class="k orange">possible</span> <span class="k blue">look-alike</span>
+    </figcaption></figure>
+  </div>
+
+  <div id="table-wrap"></div>
+</section>
+
+<section id="method">
+  <h2>What the program does</h2>
+  <ol>
+    <li><b>Gets the image.</b> The full version downloads Sentinel-1 VV images from ESA's Copernicus Data Space for any
+      area and date (free account).</li>
+    <li><b>Masks land</b>, plus 1 km of coast, because coasts and mudflats cause false alarms. <span class="small">(full version only)</span></li>
+    <li><b>Removes speckle.</b> Radar images are grainy. A Lee filter smooths the sea but keeps edges sharp.</li>
+    <li><b>Compares every pixel with the sea around it</b> (average over about 3 km). Wind changes across an image,
+      so one fixed threshold doesn't work.</li>
+    <li><b>Marks dark pixels</b>: at least 3 dB darker than the surroundings, and darker than -18 dB.</li>
+    <li><b>Joins them into patches</b> and drops tiny ones.</li>
+    <li><b>Scores each patch</b> with simple rules taken from oil spill research:
+      <table class="rules">
+        <tr><td>very dark vs sea (≥6 dB / ≥4 dB)</td><td>+2 / +1</td></tr>
+        <tr><td>long and thin, like a ship's trail (length ÷ width ≥3 / ≥1.8)</td><td>+2 / +1</td></tr>
+        <tr><td>sharp edges</td><td>+1</td></tr>
+        <tr><td>fuzzy edges (calm wind fades out slowly)</td><td>−1</td></tr>
+        <tr><td>covers more than ¼ of the sea in the image (that's weather)</td><td>−3</td></tr>
+        <tr><td>whole sea very calm (below −22 dB)</td><td>−1</td></tr>
+      </table>
+      4 or more = <span class="k red">likely oil</span>, 2–3 = <span class="k orange">possible</span>,
+      less = <span class="k blue">probably a look-alike</span>.
+    </li>
+  </ol>
+  <p>We used rules instead of AI on purpose: we can explain every single decision, and it works without
+  thousands of labelled training images.</p>
+</section>
+
+<section id="testing">
+  <h2>Testing</h2>
+  <h3>1. Simulated scene</h3>
+  <p>We made a fake radar image where we know exactly where the oil is: a ship with a curved oil trail,
+  a big calm-wind patch and a rain cell, plus realistic speckle noise.</p>
+  <figure class="wide">
+    <img src="web/img/example_result.png" alt="Test scene result: oil trail outlined in red, rain cell in blue" loading="lazy">
+    <figcaption>The oil trail was found (87% overlap with the true shape, 95% of oil pixels found).
+    The calm patch was ignored and the rain cell was marked as a look-alike.</figcaption>
+  </figure>
+
+  <h3>2. Real spills</h3>
+  <p>The full app has presets for spills reported in the news and in research papers:</p>
+  <table>
+    <tr><th>Place</th><th>When</th><th>What happened</th></tr>
+    <tr><td>Off Alappuzha, Kerala</td><td>May–Jun 2025</td><td>MSC ELSA 3 sank; ~9 km slick seen by satellite on 1 June</td></tr>
+    <tr><td>Kerch Strait, Black Sea</td><td>Dec 2024</td><td>Two tankers broke apart, ~4,000 t of fuel oil; slicks on Sentinel-1 on 18, 19, 29–31 Dec</td></tr>
+    <tr><td>Mauritius</td><td>Aug 2020</td><td>MV Wakashio ran aground on a reef and leaked fuel</td></tr>
+    <tr><td>Mumbai High, Gulf of Kutch</td><td>any date</td><td>India's offshore oil field and oil terminals, for routine checks</td></tr>
+  </table>
+
+  <h3>3. Ripple tank</h3>
+  <p>We also built a tabletop model: a fan makes ripples on a tray of water, a laser plays the radar, and a light
+  sensor plays the antenna. A few drops of oil flatten the ripples and the reading drops, the same effect the satellite uses.
+  With the fan off it says "no wind", because calm water fools the real satellite too.</p>
+</section>
+
+<section id="limits">
+  <h2>Limits (being honest)</h2>
+  <ul>
+    <li>Calm sea (wind below ~3 m/s), rain cells, natural films from algae, and ship wakes can also look dark.
+      Our rules cut false alarms, but <b>a person should always check</b> what it flags.</li>
+    <li>In very strong wind (above ~10–12 m/s) oil gets mixed into the water and can disappear from radar.</li>
+    <li>Sentinel-1 passes over each place only every few days, so this is for regular checking, not instant alarms.</li>
+    <li>The rules were tuned on a few cases. Next step: train a machine learning model on a labelled dataset
+      and test it on many more spills.</li>
+  </ul>
+</section>
+
+<section id="code">
+  <h2>The full app and code</h2>
+  <p>The full version is a Python app that runs on a laptop. It downloads real images from Copernicus, masks land,
+  shows results on a map and exports GeoJSON for Google Earth / QGIS. Setup steps are in the README.</p>
+  <p><a class="btn" id="repo-link" href="#">View the code on GitHub</a></p>
+
+  <h3 id="get-image">Getting a Sentinel-1 image yourself</h3>
+  <ol class="small">
+    <li>Make a free account at <a href="https://dataspace.copernicus.eu">dataspace.copernicus.eu</a> and open the Copernicus Browser.</li>
+    <li>Choose Sentinel-1 GRD (IW mode), pick a date and zoom to a sea area.</li>
+    <li>Choose the VV layer, then Download → Analytical → TIFF (32-bit float), WGS84.</li>
+    <li>Upload that file in <a href="#try">Try it</a> above.</li>
+  </ol>
+
+  <h3>Sources</h3>
+  <ul class="small">
+    <li><a href="https://cedre.fr/en/resources/incident-information-sheets/msc-elsa-3">Cedre - MSC ELSA 3 incident sheet</a></li>
+    <li><a href="https://www.earthdoc.org/content/papers/10.3997/2214-4609.2025510062">Sentinel-1 analysis of the Kerch Strait spill (2025)</a></li>
+    <li><a href="https://meetingorganizer.copernicus.org/EGU25/EGU25-6129.html">Zodiatis et al., modelling the Kerch Strait spill, EGU 2025</a></li>
+    <li><a href="https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/S1GRD.html">Copernicus Data Space - Sentinel-1 GRD documentation</a></li>
+    <li>Brekke &amp; Solberg (2005), Oil spill detection by satellite remote sensing, <i>Remote Sensing of Environment</i></li>
+    <li>Krestenitis et al. (2019), Oil spill identification from satellite images using deep neural networks, <i>Remote Sensing</i></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <p>Made for the Young Creators League 2026. Contains modified Copernicus Sentinel data.
+  Detections are suggestions only and must be checked by a person.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
+<script src="web/oilwatch.js"></script>
+<script src="web/demo.js"></script>
+</body>
+</html>
