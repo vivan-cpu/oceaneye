@@ -10,7 +10,9 @@ Team **OceanEye** · The Galaxy School, Wadi, Rajkot (Gujarat)
 - Vivan Sojitra - researcher
 - Mentor: Toral Dwivedi
 
-**Website (try it in your browser):** https://vivan-cpu.github.io/oilwatch/
+**Website (try it in your browser):** https://vivan-cpu.github.io/oceaneye/
+
+**Full app (live satellite images):** https://oceaneye-ycl.streamlit.app
 
 ---
 
