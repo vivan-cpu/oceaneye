@@ -11,6 +11,7 @@ Can also be run on its own:
     python detect.py some_scene.tif
 """
 
+import io
 import sys
 import json
 import numpy as np
@@ -328,6 +329,36 @@ def make_figure(scene, result, title=""):
         fig.suptitle(title)
     fig.tight_layout()
     return fig
+
+
+def overlay_png(result, max_side=1600):
+    """radar image as a see-through PNG (land/no-data transparent) with the
+    detections drawn on, so it can sit on top of a real map"""
+    from PIL import Image
+    db = result["smooth_db"]
+    g = np.clip((np.nan_to_num(db, nan=-40) + 28) / 20 * 255, 0, 255).astype("uint8")
+    rgba = np.dstack([g, g, g, np.full_like(g, 235)])
+    rgba[~np.isfinite(db) | result["land"], 3] = 0
+
+    h, w = g.shape
+    thick = max(1, int(round(max(h, w) / 700)))
+    for b in result["blobs"]:
+        c = COLOURS[b["label"]].lstrip("#")
+        col = [int(c[i:i + 2], 16) for i in (0, 2, 4)] + [255]
+        pts = b["pixel_outline"].astype(int)
+        for dy in range(-thick, thick + 1):
+            for dx in range(-thick, thick + 1):
+                yy = np.clip(pts[:, 0] + dy, 0, h - 1)
+                xx = np.clip(pts[:, 1] + dx, 0, w - 1)
+                rgba[yy, xx] = col
+
+    img = Image.fromarray(rgba, "RGBA")
+    if max(h, w) > max_side:
+        s = max_side / max(h, w)
+        img = img.resize((int(w * s), int(h * s)), Image.BILINEAR)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
 
 
 def to_geojson(result, meta=None):

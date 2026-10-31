@@ -4,14 +4,19 @@ OilWatch - spotting oil spills from space with free Sentinel-1 radar images
 run it with:
     streamlit run app.py
 """
-import io
 import os
+import io
+import sys
 import json
+import math
+import base64
+import subprocess
 import datetime as dt
 
 import pandas as pd
 import streamlit as st
 import folium
+from folium import plugins
 from streamlit_folium import st_folium
 
 import detect
@@ -20,197 +25,324 @@ from places import PLACES
 
 st.set_page_config(page_title="OilWatch", page_icon="🛰", layout="wide")
 
-st.title("OilWatch")
-st.caption("Finding oil spills at sea using free radar images from the Sentinel-1 satellite (ESA / Copernicus)")
+st.markdown("""
+<style>
+.block-container {padding-top: 1.6rem; padding-bottom: 2rem;}
+h1 {margin-bottom: 0 !important;}
+div[data-testid="stMetricValue"] {font-size: 1.7rem;}
+</style>
+""", unsafe_allow_html=True)
 
-# ---------------- sidebar ----------------
-with st.sidebar:
-    st.header("1. Pick the image")
-    source = st.radio("Where from?", ["Copernicus (download live)", "Upload a GeoTIFF", "Test scene (no internet)"])
+ESRI_SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+ESRI_LABELS = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+ESRI_ATTR = "Esri, Maxar, Earthstar Geographics"
 
-    bbox = None
-    day = None
-    upload = None
+HERE = os.path.dirname(os.path.abspath(__file__))
+HAVE_KEYS = all(fetch.get_credentials())
 
-    if source == "Copernicus (download live)":
-        place = st.selectbox("Area", list(PLACES.keys()))
-        p = PLACES[place]
-        st.caption(p["note"])
-        c1, c2 = st.columns(2)
-        west = c1.number_input("West (lon)", value=float(p["bbox"][0]), format="%.3f")
-        east = c2.number_input("East (lon)", value=float(p["bbox"][2]), format="%.3f")
-        south = c1.number_input("South (lat)", value=float(p["bbox"][1]), format="%.3f")
-        north = c2.number_input("North (lat)", value=float(p["bbox"][3]), format="%.3f")
-        bbox = (west, south, east, north)
-        d_from = st.date_input("From", dt.date.fromisoformat(p["from"]))
-        d_to = st.date_input("To", dt.date.fromisoformat(p["to"]))
 
-        if st.button("Find satellite passes"):
-            try:
-                with st.spinner("asking Copernicus..."):
-                    st.session_state["passes"] = fetch.find_passes(bbox, d_from.isoformat(), d_to.isoformat())
-                    st.session_state["passes_for"] = bbox
-            except Exception as e:
-                st.error(str(e))
+def add_basemaps(m):
+    folium.TileLayer(ESRI_SAT, attr=ESRI_ATTR, name="Satellite", overlay=False).add_to(m)
+    folium.TileLayer("CartoDB positron", name="Plain map", overlay=False).add_to(m)
+    folium.TileLayer(ESRI_LABELS, attr=ESRI_ATTR, name="Place names", overlay=True, control=True).add_to(m)
 
-        passes = st.session_state.get("passes", [])
-        if passes and st.session_state.get("passes_for") == bbox:
-            labels = [f"{t[:10]}  {t[11:16]} UTC  ({o.lower()})" for t, o in passes]
-            pick = st.selectbox(f"{len(passes)} passes found", labels)
-            day = pick[:10]
-        elif passes:
-            st.info("Area changed - click 'Find satellite passes' again.")
+
+def bbox_bounds(b):
+    return [[b[1], b[0]], [b[3], b[2]]]
+
+
+# ---------------- state ----------------
+ss = st.session_state
+if "place" not in ss:
+    ss.place = list(PLACES.keys())[0]
+    p = PLACES[ss.place]
+    ss.bbox = tuple(p["bbox"])
+    ss.d_from = dt.date.fromisoformat(p["from"])
+    ss.d_to = dt.date.fromisoformat(p["to"])
+
+
+def on_place_change():
+    p = PLACES[ss.place]
+    ss.bbox = tuple(p["bbox"])
+    ss.d_from = dt.date.fromisoformat(p["from"])
+    ss.d_to = dt.date.fromisoformat(p["to"])
+    ss.pop("passes", None)
+    ss.map_key = ss.get("map_key", 0) + 1   # redraw the map centred on the new place
+
+
+# ---------------- header ----------------
+st.title("🛰 OilWatch")
+st.caption("Spotting oil spills at sea with free Sentinel-1 radar images · YCL 2026 · Water Security")
+
+tab_scan, tab_how = st.tabs(["Scan the sea", "How it works"])
+
+with tab_how:
+    st.markdown("""
+#### Why radar?
+Sentinel-1 is a radar satellite run by ESA. It sends microwaves down at a slant and measures the echo.
+It makes its own signal, so it sees **through clouds and at night** (normal satellite photos can't).
+
+#### Why oil looks dark
+Wind makes small ripples on the sea. Ripples scatter the radar back, so normal sea looks **grey**.
+Oil forms a thin film that flattens the ripples. Flat water reflects the beam away like a mirror,
+almost no echo comes back, so **oil looks dark**.
+
+#### What the program does
+1. Downloads the VV radar image for your area and date from Copernicus (free).
+2. Hides land and 1 km of coast (coasts cause false alarms).
+3. Removes radar "speckle" (grainy noise) with a Lee filter.
+4. Compares each pixel to the sea around it (~3 km) and marks pixels at least 3 dB darker.
+5. Joins them into patches and scores each one:
+
+| Rule | Points |
+|---|---|
+| very dark vs sea (≥6 dB / ≥4 dB) | +2 / +1 |
+| long and thin like a ship trail (≥3 / ≥1.8) | +2 / +1 |
+| sharp edges | +1 |
+| fuzzy edges (calm wind fades slowly) | −1 |
+| covers > ¼ of the sea (that's weather) | −3 |
+| whole sea very calm (< −22 dB) | −1 |
+
+4+ = **likely oil**, 2–3 = **possible**, less = **probably a look-alike**.
+
+#### Limits
+Calm water (wind < ~3 m/s), rain cells, algae films and ship wakes can also look dark, and very strong wind
+can hide oil. Anything flagged should be checked by a person.
+""")
+
+with tab_scan:
+    left, right = st.columns([1, 2.2], gap="large")
+
+    # ---------------- controls ----------------
+    with left:
+        source = st.radio("Image source", ["Live satellite", "Upload GeoTIFF", "Test scene"],
+                          horizontal=True, label_visibility="collapsed")
+        bbox = ss.bbox
+        day = None
+        upload = None
+        res_m = 40
+        want_s2 = False
+
+        if source == "Live satellite":
+            if not HAVE_KEYS:
+                st.warning("Copernicus keys aren't set up yet, so live download won't work. "
+                           "Add CDSE_CLIENT_ID and CDSE_CLIENT_SECRET in the app's Secrets. "
+                           "Test scene and upload still work.")
+            st.selectbox("Jump to", list(PLACES.keys()), key="place", on_change=on_place_change)
+            st.caption(PLACES[ss.place]["note"] + "  \nOr draw your own box on the map with the ▢ tool.")
+
+            c1, c2 = st.columns(2)
+            c1.date_input("From", key="d_from")
+            c2.date_input("To", key="d_to")
+
+            w_km = (bbox[2] - bbox[0]) * 111.32 * math.cos(math.radians((bbox[1] + bbox[3]) / 2))
+            h_km = (bbox[3] - bbox[1]) * 110.57
+            st.caption(f"Area: {w_km:.0f} × {h_km:.0f} km  ·  "
+                       f"{bbox[1]:.2f}°N {bbox[0]:.2f}°E → {bbox[3]:.2f}°N {bbox[2]:.2f}°E")
+            if max(w_km, h_km) > 150:
+                st.info("Big box - the image will be less sharp. Smaller boxes (under ~100 km) work best.")
+
+            if st.button("① Find satellite passes", width="stretch", disabled=not HAVE_KEYS):
+                try:
+                    with st.spinner("asking Copernicus..."):
+                        ss.passes = fetch.find_passes(bbox, ss.d_from.isoformat(), ss.d_to.isoformat())
+                        ss.passes_for = bbox
+                    if not ss.passes:
+                        st.warning("No Sentinel-1 passes in those dates. Try a longer date range.")
+                except Exception as e:
+                    st.error(str(e))
+
+            passes = ss.get("passes", [])
+            if passes and ss.get("passes_for") == bbox:
+                labels = [f"{t[:10]}  ·  {t[11:16]} UTC  ·  {o.lower()}" for t, o in passes]
+                pick = st.selectbox(f"② Pick a date ({len(passes)} found)", labels)
+                day = pick[:10]
+            elif passes:
+                st.info("Area changed - find passes again.")
+
+            with st.expander("Options"):
+                res_m = st.select_slider("Pixel size (m)", options=[20, 30, 40, 60, 80], value=40,
+                                         help="smaller = sharper, but slower and uses more free quota")
+                want_s2 = st.checkbox("Also get a normal colour photo (Sentinel-2)")
+
+        elif source == "Upload GeoTIFF":
+            upload = st.file_uploader("Sentinel-1 VV image (.tif)", type=["tif", "tiff"])
+            st.caption("From browser.dataspace.copernicus.eu → Sentinel-1 → VV → Download → Analytical → TIFF 32-bit.")
         else:
-            st.caption("Sentinel-1 passes over most places every 6-12 days.")
+            st.caption("A simulated radar image with an oil trail, a calm-wind patch and a rain cell, "
+                       "to check the program works.")
 
-        res_m = st.select_slider("Pixel size (m)", options=[20, 30, 40, 60, 80], value=40,
-                                 help="smaller = sharper but slower and uses more of the free quota")
-        want_s2 = st.checkbox("Also get a normal colour photo (Sentinel-2)", value=False)
+        with st.expander("Detection settings"):
+            contrast = st.slider("How much darker than sea (dB)", 1.5, 8.0, detect.SETTINGS["contrast_db"], 0.5)
+            min_area = st.slider("Smallest patch (km²)", 0.01, 2.0, detect.SETTINGS["min_area_km2"], 0.01)
+            bg_km = st.slider("Background window (km)", 1.0, 10.0, detect.SETTINGS["background_km"], 0.5)
+        settings = {"contrast_db": contrast, "min_area_km2": min_area, "background_km": bg_km}
 
-    elif source == "Upload a GeoTIFF":
-        upload = st.file_uploader("Sentinel-1 VV image (.tif)", type=["tif", "tiff"])
-        st.caption("e.g. downloaded from browser.dataspace.copernicus.eu -> Sentinel-1 -> VV, as 32-bit TIFF")
-    else:
-        st.caption("A fake radar image with an oil trail, a calm-wind patch and a rain cell. "
-                   "Used to check the program works.")
+        go = st.button("③ Run detection" if source == "Live satellite" else "Run detection",
+                       type="primary", width="stretch")
 
-    st.header("2. Settings")
-    with st.expander("Detection settings"):
-        contrast = st.slider("How much darker than sea (dB)", 1.5, 8.0, detect.SETTINGS["contrast_db"], 0.5)
-        min_area = st.slider("Smallest slick (km²)", 0.01, 2.0, detect.SETTINGS["min_area_km2"], 0.01)
-        bg_km = st.slider("Background window (km)", 1.0, 10.0, detect.SETTINGS["background_km"], 0.5)
-    settings = {"contrast_db": contrast, "min_area_km2": min_area, "background_km": bg_km}
+    # ---------------- area map ----------------
+    with right:
+        out = ss.get("out")
+        if out and out.get("source") == source:
+            map_bounds = out["bounds"]
+        else:
+            map_bounds = bbox_bounds(bbox)
+        m = folium.Map(tiles=None, control_scale=True)
+        add_basemaps(m)
+        m.fit_bounds(map_bounds)
 
-    go = st.button("Run detection", type="primary")
+        if source == "Live satellite":
+            folium.Rectangle(bbox_bounds(bbox), color="#ffd400", weight=2, fill=False,
+                             tooltip="area to scan").add_to(m)
+            plugins.Draw(export=False, position="topleft",
+                         draw_options={"polyline": False, "polygon": False, "circle": False,
+                                       "marker": False, "circlemarker": False,
+                                       "rectangle": {"shapeOptions": {"color": "#ffd400"}}},
+                         edit_options={"edit": False, "remove": False}).add_to(m)
+
+        if out and out.get("source") == source:
+            fg = folium.FeatureGroup(name="Radar image", show=True)
+            folium.raster_layers.ImageOverlay(out["overlay"], bounds=out["bounds"], opacity=0.85,
+                                              interactive=False, zindex=2).add_to(fg)
+            fg.add_to(m)
+            if out.get("s2"):
+                fg2 = folium.FeatureGroup(name="Sentinel-2 photo", show=False)
+                folium.raster_layers.ImageOverlay(out["s2"], bounds=out["bounds"], opacity=1,
+                                                  zindex=1).add_to(fg2)
+                fg2.add_to(m)
+            det = folium.FeatureGroup(name="Detections", show=True)
+            for f in out["geojson"]["features"]:
+                pr = f["properties"]
+                colour = detect.COLOURS[pr["label"]]
+                popup = (f"<b>#{pr['id']} {pr['label']}</b><br>area {pr['area_km2']} km² · "
+                         f"length {pr['length_km']} km<br>contrast {pr['contrast_db']} dB · "
+                         f"elongation {pr['elongation']}<br><small>{pr['reasons']}</small>")
+                folium.GeoJson(f, style_function=lambda _, c=colour: {"color": c, "weight": 2.5, "fillOpacity": 0.15},
+                               tooltip=f"#{pr['id']} {pr['label']}",
+                               popup=folium.Popup(popup, max_width=320)).add_to(det)
+            det.add_to(m)
+
+        plugins.Fullscreen(position="topright").add_to(m)
+        plugins.MousePosition(position="bottomleft", separator=" , ", num_digits=3, prefix="lat, lon:",
+                              lat_formatter="function(n){return n.toFixed(3)}",
+                              lng_formatter="function(n){return n.toFixed(3)}").add_to(m)
+        folium.LayerControl(collapsed=True).add_to(m)
+
+        res = st_folium(m, height=560, use_container_width=True,
+                        key=f"map_{source}_{ss.get('map_key', 0)}",
+                        returned_objects=["last_active_drawing"])
+
+        drawn = (res or {}).get("last_active_drawing")
+        if source == "Live satellite" and drawn and drawn.get("geometry", {}).get("type") == "Polygon":
+            pts = drawn["geometry"]["coordinates"][0]
+            lons = [p[0] for p in pts]
+            lats = [p[1] for p in pts]
+            new = (round(min(lons), 3), round(min(lats), 3), round(max(lons), 3), round(max(lats), 3))
+            if new != tuple(ss.bbox) and new[2] > new[0] and new[3] > new[1]:
+                ss.bbox = new
+                ss.pop("passes", None)
+                st.rerun()
 
 
 # ---------------- work ----------------
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, max_entries=20)
 def run_on_file(path, settings_json):
     scene = detect.load_geotiff(path)
     res = detect.analyse(scene, json.loads(settings_json))
     fig = detect.make_figure(scene, res)
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=120)
-    rows = detect.summary_rows(res)
-    gj = detect.to_geojson(res)
-    # only return plain stuff so streamlit can cache it
-    lon0, lat0 = scene["lonlat"](0, 0)
-    lon1, lat1 = scene["lonlat"](scene["db"].shape[0] - 1, scene["db"].shape[1] - 1)
-    return {"png": buf.getvalue(), "rows": rows, "geojson": gj, "warnings": res["warnings"],
-            "bg": res["scene_bg_db"], "px_m": scene["px_w_km"] * 1000,
-            "bounds": [[float(lat1), float(lon0)], [float(lat0), float(lon1)]]}
+    fig.savefig(buf, format="png", dpi=110)
+    h, w = scene["db"].shape
+    lon0, lat0 = scene["lonlat"](-0.5, -0.5)
+    lon1, lat1 = scene["lonlat"](h - 0.5, w - 0.5)
+    ov = "data:image/png;base64," + base64.b64encode(detect.overlay_png(res)).decode()
+    return {"png": buf.getvalue(), "rows": detect.summary_rows(res), "geojson": detect.to_geojson(res),
+            "warnings": res["warnings"], "bg": res["scene_bg_db"], "px_m": scene["px_w_km"] * 1000,
+            "overlay": ov,
+            "bounds": [[float(min(lat0, lat1)), float(min(lon0, lon1))],
+                       [float(max(lat0, lat1)), float(max(lon0, lon1))]]}
 
 
 if go:
     try:
-        s2_path = None
-        if source == "Copernicus (download live)":
+        s2 = None
+        if source == "Live satellite":
             if not day:
-                st.warning("First click 'Find satellite passes' and choose a date.")
+                st.warning("First press ① Find satellite passes and pick a date.")
                 st.stop()
             with st.spinner(f"downloading Sentinel-1 image for {day}..."):
-                path, cached = fetch.download_s1(bbox, day, res_m)
+                path, _ = fetch.download_s1(bbox, day, res_m)
             if want_s2:
                 try:
                     with st.spinner("downloading Sentinel-2 photo..."):
-                        s2_path, _ = fetch.download_s2(bbox, day)
+                        p2, _ = fetch.download_s2(bbox, day)
+                        s2 = "data:image/png;base64," + base64.b64encode(open(p2, "rb").read()).decode()
                 except Exception as e:
                     st.warning(f"Couldn't get Sentinel-2 photo: {e}")
-            label = f"Sentinel-1 VV, {day}"
-        elif source == "Upload a GeoTIFF":
+            label = f"Sentinel-1 VV · {day} · {ss.place if PLACES[ss.place]['bbox'] == tuple(bbox) else 'custom area'}"
+        elif source == "Upload GeoTIFF":
             if upload is None:
                 st.warning("Upload a file first.")
                 st.stop()
-            path = os.path.join(fetch.CACHE, "upload_" + upload.name)
+            path = os.path.join(fetch.CACHE, "upload_" + os.path.basename(upload.name))
             with open(path, "wb") as fh:
                 fh.write(upload.getbuffer())
             label = upload.name
         else:
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_scene.tif")
+            path = os.path.join(fetch.CACHE, "test_scene.tif")
             if not os.path.exists(path):
-                import subprocess, sys
-                subprocess.run([sys.executable, "make_test_scene.py"], cwd=os.path.dirname(path), check=True)
+                subprocess.run([sys.executable, os.path.join(HERE, "make_test_scene.py")],
+                               cwd=fetch.CACHE, check=True)
             label = "Test scene (simulated)"
 
         with st.spinner("looking for dark patches..."):
-            out = run_on_file(path, json.dumps(settings, sort_keys=True))
-        st.session_state["out"] = out
-        st.session_state["label"] = label
-        st.session_state["s2"] = s2_path
+            result = dict(run_on_file(path, json.dumps(settings, sort_keys=True)))
+        result.update({"label": label, "source": source, "s2": s2})
+        ss.out = result
+        ss.map_key = ss.get("map_key", 0) + 1
+        st.rerun()
     except Exception as e:
         st.error(f"Something went wrong: {e}")
 
 
-# ---------------- show results ----------------
-out = st.session_state.get("out")
-if not out:
-    st.info("Pick an image on the left and press **Run detection**.")
-    with st.expander("How does this work?", expanded=True):
-        st.markdown("""
-Sentinel-1 is a radar satellite. It sends microwaves down and measures how much bounces back.
-Wind makes small ripples on the sea, and ripples scatter the radar back, so normal sea looks **grey**.
-Oil makes the water surface smooth (it damps the ripples), so the radar bounces away like off a mirror,
-and oil looks **dark**.
+# ---------------- results ----------------
+out = ss.get("out")
+with tab_scan:
+    if not out or out.get("source") != source:
+        st.info("Pick an area and date, then run detection. Results show up on the map above and here.")
+        st.stop()
 
-Radar works through clouds and at night, which normal photos can't do.
+    st.divider()
+    st.subheader(out["label"])
+    for w in out["warnings"]:
+        st.warning(w)
 
-The program:
-1. removes the grainy noise ("speckle") with a Lee filter
-2. compares each pixel to the sea around it and marks pixels that are much darker
-3. joins them into patches and measures each one: how dark, how long and thin, how sharp the edges are
-4. gives points for things that look like oil (dark, long, sharp edges) and takes away points for
-   things that look like calm wind or rain (huge, fuzzy, round)
+    rows = out["rows"]
+    n_oil = sum(r["verdict"] == "likely oil" for r in rows)
+    n_pos = sum(r["verdict"] == "possible oil" for r in rows)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Likely oil", n_oil)
+    c2.metric("Possible oil", n_pos)
+    c3.metric("Oil area (km²)", round(sum(r["area (km²)"] for r in rows if r["verdict"] != "probably look-alike"), 2))
+    c4.metric("Sea brightness (dB)", round(out["bg"], 1),
+              help="-12 to -20 dB is normal windy sea. Below -22 means very calm, results less reliable.")
 
-It is **not perfect**. Calm water, rain, algae and ship wakes can also look dark.
-Anything it flags should be checked by a person.
-""")
-    st.stop()
+    if rows:
+        df = pd.DataFrame(rows)
+        st.dataframe(df, hide_index=True, width="stretch",
+                     column_config={"why": st.column_config.TextColumn(width="large")})
+        d1, d2, d3 = st.columns(3)
+        d1.download_button("⬇ GeoJSON (Google Earth / QGIS)", json.dumps(out["geojson"]),
+                           file_name="oilwatch_detections.geojson", width="stretch")
+        d2.download_button("⬇ Table (CSV)", df.to_csv(index=False), file_name="oilwatch_detections.csv",
+                           width="stretch")
+        d3.download_button("⬇ Picture (PNG)", out["png"], file_name="oilwatch_result.png", width="stretch")
+    else:
+        st.success("No dark patches that look like oil.")
 
-st.subheader(st.session_state.get("label", ""))
-for w in out["warnings"]:
-    st.warning(w)
+    with st.expander("Side-by-side radar picture"):
+        st.image(out["png"], width="stretch")
 
-rows = out["rows"]
-n_oil = sum(r["verdict"] == "likely oil" for r in rows)
-n_pos = sum(r["verdict"] == "possible oil" for r in rows)
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Likely oil", n_oil)
-c2.metric("Possible oil", n_pos)
-c3.metric("Total oil area (km²)", round(sum(r["area (km²)"] for r in rows if r["verdict"] != "probably look-alike"), 2))
-c4.metric("Sea brightness (dB)", round(out["bg"], 1), help="around -12 to -20 dB is normal windy sea. "
-          "below -22 means very calm, results less reliable")
-
-st.image(out["png"], width="stretch")
-
-if st.session_state.get("s2"):
-    st.image(st.session_state["s2"], caption="Sentinel-2 normal colour, closest clear-ish day "
-             "(oil is usually hard to see here, which is why we use radar)", width="stretch")
-
-if rows:
-    st.markdown("#### Detected patches")
-    df = pd.DataFrame(rows)
-    st.dataframe(df, hide_index=True, width="stretch")
-
-    st.markdown("#### On the map")
-    b = out["bounds"]
-    m = folium.Map(location=[(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2], zoom_start=9,
-                   tiles="CartoDB positron")
-    folium.Rectangle(b, color="#555", weight=1, fill=False, dash_array="4").add_to(m)
-    for f in out["geojson"]["features"]:
-        pr = f["properties"]
-        colour = detect.COLOURS[pr["label"]]
-        folium.GeoJson(f, style_function=lambda _, c=colour: {"color": c, "weight": 2, "fillOpacity": 0.35},
-                       tooltip=f"#{pr['id']} {pr['label']} - {pr['area_km2']} km²").add_to(m)
-    st_folium(m, height=450, use_container_width=True, returned_objects=[])
-
-    c1, c2, c3 = st.columns(3)
-    c1.download_button("Download GeoJSON (for Google Earth / QGIS)", json.dumps(out["geojson"]),
-                       file_name="oilwatch_detections.geojson")
-    c2.download_button("Download table (CSV)", df.to_csv(index=False), file_name="oilwatch_detections.csv")
-    c3.download_button("Download picture (PNG)", out["png"], file_name="oilwatch_result.png")
-else:
-    st.success("No dark patches found that look like oil.")
-
-st.caption(f"Pixel size ≈ {out['px_m']:.0f} m. Contains modified Copernicus Sentinel data. "
-           "Detections are suggestions only and must be checked by a person.")
+    st.caption(f"Pixel ≈ {out['px_m']:.0f} m · Contains modified Copernicus Sentinel data · "
+               "Detections are suggestions and must be checked by a person.")

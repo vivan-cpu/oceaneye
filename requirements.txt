@@ -9,3 +9,4 @@ streamlit>=1.50
 folium>=0.15
 streamlit-folium>=0.20
 global-land-mask>=1.0
+pillow>=9.0
