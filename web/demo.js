@@ -4,15 +4,14 @@
   const COL = { "likely oil": [230, 59, 46], "possible oil": [232, 150, 12], "probably look-alike": [61, 139, 217] };
   let current = null;   // the image we last loaded
 
-  // link to the repo (works when hosted on username.github.io/repo)
-  const repoLink = $("repo-link");
-  if (location.hostname.endsWith("github.io")) {
-    const user = location.hostname.split(".")[0];
-    const repo = location.pathname.split("/").filter(Boolean)[0] || (user + ".github.io");
-    repoLink.href = `https://github.com/${user}/${repo}`;
-  } else {
-    repoLink.href = "https://github.com";
-  }
+  // fig 1: show / hide the outlines the program drew, so you can compare with the plain radar image
+  const toggle = $("toggle-outlines"), outlines = $("outlines");
+  toggle.addEventListener("click", () => {
+    const on = toggle.getAttribute("aria-pressed") !== "true";
+    toggle.setAttribute("aria-pressed", on);
+    outlines.classList.toggle("off", !on);
+    toggle.textContent = on ? "Hide what the program marked" : "Show what the program marked";
+  });
 
   // sliders
   [["contrast", "o-contrast", 1], ["minarea", "o-minarea", 2], ["bgkm", "o-bg", 1]].forEach(([s, o, d]) => {
