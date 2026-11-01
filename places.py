@@ -22,7 +22,8 @@ PLACES = {
     "Oil Rocks, Caspian Sea - old oil platforms": {
         "bbox": (50.5, 40.0, 51.2, 40.45),
         "from": "2026-09-01", "to": "2026-10-30",
-        "note": "Very old offshore oil field, small leaks show up on radar very often. Good for testing.",
+        "note": "Very old offshore oil field, leaks show up on radar very often. "
+                "Try 17 Oct 2026, there was a huge swirling slick.",
     },
     "Mumbai High offshore field (India)": {
         "bbox": (71.0, 19.15, 71.8, 19.75),

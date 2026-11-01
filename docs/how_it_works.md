@@ -39,6 +39,7 @@ We use the **VV** band (vertical send, vertical receive), which shows the sea co
 | 3 | Lee speckle filter (7×7) | radar images are grainy; this smooths sea but keeps edges |
 | 4 | Local background = average sea in a ~3 km window | wind changes across the image, so one fixed threshold doesn't work |
 | 5 | Mark pixels ≥3 dB darker than background AND below -18 dB | "dark spot" detection |
+| 5b | Work out the background again without the dark pixels, mark again | big slicks (wider than 3 km) otherwise only get their edges found |
 | 6 | Clean up mask, drop blobs < 0.05 km² | remove noise |
 | 7 | Measure each blob: contrast, elongation, edge sharpness, area | features |
 | 8 | Points system → likely / possible / look-alike | explainable decision |
@@ -59,8 +60,21 @@ Score ≥4 = likely oil, 2-3 = possible, below 2 = probably look-alike.
    behind a ship, a calm-wind patch and a rain cell. We know where the oil really is.
    Result: found the oil trail (87% overlap with the true shape, 95% of oil pixels found),
    ignored the calm patch, called the rain cell a look-alike.
-2. **Real spills**: Kerch Strait (Dec 2024), MSC ELSA 3 (May-Jun 2025), Wakashio (Aug 2020).
-   _(fill in: which dates you ran, what it found, screenshots)_
+2. **Real satellite images** (downloaded live from Copernicus, 1 Nov 2026):
+   - **Oil Rocks, Caspian Sea, 6 passes 12-30 Oct 2026**: "likely oil" found on all 6. On 17 Oct a huge
+     swirling slick around the platforms (picture: `web/img/oilrocks_2026-10-17.png`).
+   - **Bug 1 found by this test**: global-land-mask counts the Caspian Sea (and big lakes) as land, so at first
+     the whole sea was hidden and nothing was found. Fix: if the map says "all land" but the radar median is
+     below -14 dB (water), trust the radar and don't mask.
+   - **Bug 2**: big slicks only had their edges found, because the 3 km background window was all oil.
+     Fix: step 5b. Test scene got slightly better too (IoU 0.87 -> 0.89, recall 0.95 -> 1.00).
+   - **Kerch Strait, 18 / 19 / 30 Dec 2024**: only small "possible" patches. We can see thin dark streaks on
+     18 and 19 Dec but they are only 1-2 dB darker than the sea (oil is usually 3-10 dB). There's also a dark
+     strip along the Anapa coast on 18 Dec, but it's inside the 1 km coast zone we ignore. Lowering the
+     threshold to 2-2.5 dB caught more streaks but gave 20-58 false alarms on 30 Dec (no visible slick), so we
+     kept 3 dB. Our guess: the heavy fuel oil (mazut) mixed into the water and sank instead of making a thin
+     smooth film, which is what radar sees best. **Good thing to say honestly in the interview.**
+   - Still to try: MSC ELSA 3 off Kerala, 1 June 2025.
 3. **Ripple tank**: clean vs oil vs no-wind, 5 tries each. _(fill in your table)_
 4. **Talking to people**: _(fill in - see video plan for ideas)_
 

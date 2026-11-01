@@ -80,7 +80,8 @@ From the command line: `python detect.py some_image.tif`
 3. Red = likely oil, orange = possible, blue = probably a look-alike. The table says *why* for each one.
 4. Download the GeoJSON and open it in Google Earth or QGIS if you want.
 
-Good first tries: Kerch Strait 18 or 19 Dec 2024; Oil Rocks (Caspian) any date.
+Good first tries: Oil Rocks (Caspian) 17 Oct 2026 (huge slick); Kerch Strait 18 or 19 Dec 2024
+(harder, the slicks there are faint).
 
 ## Limits (be honest about these in the interview)
 

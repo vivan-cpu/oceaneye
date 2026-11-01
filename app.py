@@ -94,6 +94,7 @@ almost no echo comes back, so **oil looks dark**.
 2. Hides land and 1 km of coast (coasts cause false alarms).
 3. Removes radar "speckle" (grainy noise) with a Lee filter.
 4. Compares each pixel to the sea around it (~3 km) and marks pixels at least 3 dB darker.
+   Then does it again leaving out the dark pixels, so the middle of big slicks is found too.
 5. Joins them into patches and scores each one:
 
 | Rule | Points |

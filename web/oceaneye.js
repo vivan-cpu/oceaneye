@@ -10,6 +10,7 @@
     contrastDb: 3.0,
     maxDb: -18.0,
     minAreaKm2: 0.05,
+    twoPass: true,       // 2nd pass so the middle of big slicks gets found too
   };
 
   // ---------- helpers ----------
@@ -170,6 +171,28 @@
     for (let i = 0; i < N; i++)
       dark[i] = sea[i] && bg[i] - smooth[i] > s.contrastDb && smooth[i] < s.maxDb ? 1 : 0;
 
+    // second pass (same as 3b in detect.py): work out the background again without the
+    // dark pixels, so the middle of a big slick doesn't count as "normal sea"
+    if (s.twoPass && dark.some(v => v)) {
+      const near = dilate(dark, w, h, disk(2));
+      const clean = new Uint8Array(N), a2 = new Float32Array(N), vals = [];
+      for (let i = 0; i < N; i++) {
+        clean[i] = sea[i] && !near[i] ? 1 : 0;
+        a2[i] = clean[i] ? smooth[i] : 0;
+        if (clean[i]) vals.push(smooth[i]);
+      }
+      vals.sort((p, q) => p - q);
+      const sceneBg = vals.length ? vals[vals.length >> 1] : NaN;
+      const n2 = boxMean(a2, w, h, win), d2 = boxMean(clean, w, h, win);
+      const nBig = boxMean(a2, w, h, win * 4 + 1), dBig = boxMean(clean, w, h, win * 4 + 1);
+      for (let i = 0; i < N; i++) {
+        if (d2[i] > 0) bg[i] = n2[i] / d2[i];
+        else if (dBig[i] > 0) bg[i] = nBig[i] / dBig[i];
+        else if (Number.isFinite(sceneBg)) bg[i] = sceneBg;
+        dark[i] = sea[i] && bg[i] - smooth[i] > s.contrastDb && smooth[i] < s.maxDb ? 1 : 0;
+      }
+    }
+
     dark = dilate(erode(dark, w, h, disk(1)), w, h, disk(1));   // opening
     dark = erode(dilate(dark, w, h, disk(2)), w, h, disk(2));   // closing
     dark = fillHoles(dark, w, h);
@@ -230,19 +253,21 @@
       let d6 = d2; for (let k = 0; k < 4; k++) d6 = dilate(d6, bw, bh, plus);
       const er = erode(m, bw, bh, plus);
 
-      let inSum = 0, outSum = 0, outN = 0, edgeSum = 0, edgeN = 0;
+      let inSum = 0, inN = 0, outSum = 0, outN = 0, edgeSum = 0, edgeN = 0;
       let sx = 0, sy = 0;
       const edgePts = [];
       for (let yy = 0; yy < bh; yy++)
         for (let xx = 0; xx < bw; xx++) {
           const k = yy * bw + xx, gi = (yy + by0) * w + xx + bx0;
           if (m[k]) {
-            inSum += smooth[gi]; sx += xx; sy += yy;
+            // clean-up can pull in a few no-data pixels, skip those (like nanmean in python)
+            if (Number.isFinite(smooth[gi])) { inSum += smooth[gi]; inN++; }
+            sx += xx; sy += yy;
             if (!er[k]) { edgeSum += sobelAt(smoothFilled, w, h, xx + bx0, yy + by0); edgeN++; edgePts.push(gi); }
           } else if (d6[k] && !d2[k] && sea[gi]) { outSum += smooth[gi]; outN++; }
         }
       const n = px.length;
-      const inner = inSum / n, outer = outN ? outSum / outN : inner;
+      const inner = inN ? inSum / inN : sceneBg, outer = outN ? outSum / outN : inner;
       const contrast = outer - inner;
       const edgeGrad = edgeN ? edgeSum / edgeN : 0;
       const edge = contrast > 0 ? edgeGrad / (contrast / 4 + 1e-6) : 0;

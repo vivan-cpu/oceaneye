@@ -32,6 +32,8 @@ SETTINGS = {
     "max_db": -18.0,            # and darker than this in absolute terms
     "min_area_km2": 0.05,       # ignore tiny specks
     "coast_buffer_km": 1.0,     # ignore stuff right next to land
+    "open_px": 1,               # clean-up size. bigger removes more noise but also thin slicks
+    "two_pass": True,           # 2nd pass so the middle of big slicks gets found too (see 3b)
 }
 
 
@@ -118,22 +120,29 @@ def masked_mean(img, valid, size):
         return num / den
 
 
-def make_land_mask(scene, step=8):
+def make_land_mask(scene, buffer_km, step=8):
     """true where land (or close to land). uses global-land-mask (1km data) on a
-    coarse grid then blows it back up, otherwise its slow on big images"""
+    coarse grid then blows it back up, otherwise its slow on big images.
+    returns (mask, note). note is a warning text or None"""
     db = scene["db"]
     if globe is None:
-        return np.zeros(db.shape, bool)
+        return np.zeros(db.shape, bool), None
     rows, cols = db.shape
     rr, cc = np.mgrid[0:rows:step, 0:cols:step]
     lon, lat = scene["lonlat"](rr, cc)
     lon = ((lon + 180) % 360) - 180
     small = globe.is_land(lat, lon)
+    # global-land-mask counts the Caspian Sea and big lakes as land (found this on Oil Rocks).
+    # if it says "all land" but the radar is dark like water (land is usually brighter
+    # than -14 dB), trust the radar and don't mask anything
+    if small.all() and np.nanmedian(db) < -14:
+        return np.zeros(db.shape, bool), ("The land map doesn't cover inland seas like the Caspian, "
+                                          "so the coast is not hidden here. Ignore anything right on the shore.")
     big = np.kron(small, np.ones((step, step), bool))[:rows, :cols]
-    buf_px = int(round(SETTINGS["coast_buffer_km"] / max(scene["px_w_km"], 1e-6)))
+    buf_px = int(round(buffer_km / max(scene["px_w_km"], 1e-6)))
     if buf_px > 0 and big.any():
         big = ndi.binary_dilation(big, iterations=buf_px)
-    return big
+    return big, None
 
 
 def find_dark_spots(scene, s=None):
@@ -141,7 +150,7 @@ def find_dark_spots(scene, s=None):
     db = scene["db"]
     valid = np.isfinite(db)
 
-    land = make_land_mask(scene)
+    land, land_note = make_land_mask(scene, s["coast_buffer_km"])
     sea = valid & ~land
 
     # 1. speckle filter (in linear units), back to dB
@@ -157,8 +166,23 @@ def find_dark_spots(scene, s=None):
     # 3. threshold: darker than surroundings by contrast_db AND dark in absolute terms
     dark = sea & ((bg - smooth_db) > s["contrast_db"]) & (smooth_db < s["max_db"])
 
+    # 3b. second pass. a big slick (wider than the window) counts itself as "normal sea"
+    # so only its edges get found. so we work out the background again but leave out
+    # the dark pixels from pass 1. where the window is all dark, use a 4x bigger window
+    if s["two_pass"] and dark.any():
+        clean = sea & ~ndi.binary_dilation(dark, iterations=2)
+        bg2 = masked_mean(np.nan_to_num(smooth_db), clean, win)
+        bg_big = masked_mean(np.nan_to_num(smooth_db), clean, win * 4 + 1)
+        bg2 = np.where(np.isfinite(bg2), bg2, bg_big)
+        # still nothing clean nearby (middle of a huge slick) -> normal sea of the whole image
+        if clean.any():
+            bg2 = np.where(np.isfinite(bg2), bg2, np.nanmedian(smooth_db[clean]))
+        bg = np.where(np.isfinite(bg2), bg2, bg)
+        dark = sea & ((bg - smooth_db) > s["contrast_db"]) & (smooth_db < s["max_db"])
+
     # 4. clean up the mask a bit
-    dark = ndi.binary_opening(dark, structure=morphology.disk(1))
+    if s["open_px"] > 0:
+        dark = ndi.binary_opening(dark, structure=morphology.disk(s["open_px"]))
     dark = ndi.binary_closing(dark, structure=morphology.disk(2))
     dark = ndi.binary_fill_holes(dark)
     px_km2 = scene["px_w_km"] * scene["px_h_km"]
@@ -171,7 +195,7 @@ def find_dark_spots(scene, s=None):
         keep[0] = False
         dark = keep[lab]
 
-    return dark, smooth_db, bg, sea, land
+    return dark, smooth_db, bg, sea, land, land_note
 
 
 # ---------- deciding oil vs look-alike ----------
@@ -277,10 +301,10 @@ def describe_blobs(dark, smooth_db, bg, sea, scene):
 
 
 def analyse(scene, settings=None):
-    dark, smooth_db, bg, sea, land = find_dark_spots(scene, settings)
+    dark, smooth_db, bg, sea, land, land_note = find_dark_spots(scene, settings)
     blobs, scene_bg = describe_blobs(dark, smooth_db, bg, sea, scene)
 
-    warnings = []
+    warnings = [land_note] if land_note else []
     if scene_bg < -22:
         warnings.append("Sea is very calm in this image (low wind). Calm water also looks dark, "
                         "so results here are not reliable.")
@@ -318,6 +342,8 @@ def make_figure(scene, result, title=""):
         pts = b["pixel_outline"]
         c = COLOURS[b["label"]]
         axes[1].plot(pts[:, 1], pts[:, 0], color=c, lw=1.6)
+        if b["id"] > 25:
+            continue   # too many numbers makes it unreadable, the table has all of them
         cy, cx = pts[:, 0].mean(), pts[:, 1].mean()
         axes[1].text(cx, cy, str(b["id"]), color="white", fontsize=9, weight="bold",
                      ha="center", va="center",

@@ -124,6 +124,9 @@
     <li><b>Compares every pixel with the sea around it</b> (average over about 3 km). Wind changes across an image,
       so one fixed threshold doesn't work.</li>
     <li><b>Marks dark pixels</b>: at least 3 dB darker than the surroundings, and darker than -18 dB.</li>
+    <li><b>Second pass.</b> A big slick is wider than the 3 km window, so it counts itself as "normal sea" and
+      only its edges get marked. So we work out the background again, leaving out the dark pixels from the
+      first pass. Now the middle of big slicks gets found too.</li>
     <li><b>Joins them into patches</b> and drops tiny ones.</li>
     <li><b>Scores each patch</b> with simple rules taken from oil spill research:
       <table class="rules">
@@ -153,8 +156,27 @@
     The calm patch was ignored and the rain cell was marked as a look-alike.</figcaption>
   </figure>
 
-  <h3>2. Real spills</h3>
-  <p>The full app has presets for spills reported in the news and in research papers:</p>
+  <h3>2. Real satellite images</h3>
+  <p><b>Oil Rocks, Caspian Sea.</b> Old oil platforms here leak all the time. We ran 6 real Sentinel-1
+  images from Oct 2026 and the program found "likely oil" on every one. On 17 Oct there was a huge
+  swirling slick around the platforms:</p>
+  <figure class="wide">
+    <img src="web/img/oilrocks_2026-10-17.png" alt="Oil Rocks 17 Oct 2026: swirling oil slick around the platforms, outlined in red and orange" loading="lazy">
+    <figcaption>Left: the radar image. Right: what the program marked. Red = likely oil, orange = possible.</figcaption>
+  </figure>
+  <p>Testing on real data also found two bugs that the fake scene never showed:</p>
+  <ul>
+    <li>The land map we use counts the Caspian Sea as land, so at first the program hid the whole sea and found
+      nothing. Now, if the map says "all land" but the radar is dark like water, we trust the radar.</li>
+    <li>Big slicks only had their edges marked. The second pass (above) fixed that.</li>
+  </ul>
+  <p><b>Kerch Strait, Black Sea (Dec 2024).</b> This one was harder. On 18 and 19 Dec we can see thin dark
+  streaks, but they are only 1-2 dB darker than the sea (oil is usually 3-10 dB), and a lot of the oil was
+  right on the Anapa coast, inside the strip we ignore. The program flagged only small "possible" patches.
+  If we lowered the threshold to catch the streaks, it gave 20-50 false alarms on 30 Dec, when there was no
+  slick, so we kept it strict. We think the heavy fuel oil here mixed into the water instead of making a
+  smooth film.</p>
+  <p>The full app has presets for these and other places:</p>
   <table>
     <tr><th>Place</th><th>When</th><th>What happened</th></tr>
     <tr><td>Off Alappuzha, Kerala</td><td>May–Jun 2025</td><td>MSC ELSA 3 sank; ~9 km slick seen by satellite on 1 June</td></tr>
