@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OceanEye - spotting oil spills from space</title>
 <meta name="description" content="A YCL 2026 student project: finding oil spills at sea using free Sentinel-1 radar satellite images.">
-<link rel="stylesheet" href="web/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Oxanium:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="web/style.css?v=2">
 </head>
 <body>
 
-<header>
-  <p class="tag">YCL 2026 &middot; Plaksha University &middot; Theme: Water Security &middot; Team OceanEye</p>
-  <h1>OceanEye</h1>
-  <p class="sub">Finding oil spills at sea using free radar images from the Sentinel-1 satellite.</p>
-  <nav>
+<nav class="bar" aria-label="Sections">
+  <a class="mark" href="#top">OceanEye</a>
+  <div class="links">
     <a href="#problem">Problem</a>
     <a href="#science">Science</a>
     <a href="#try">Try it</a>
@@ -21,7 +22,37 @@
     <a href="#testing">Testing</a>
     <a href="#limits">Limits</a>
     <a href="#code">Code</a>
-  </nav>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="hero-text">
+    <h1>OceanEye</h1>
+    <p class="sub">We find oil spills at sea using free radar images from the Sentinel-1 satellite.
+    Radar sees through clouds and at night, when normal photos can't.</p>
+    <p class="who">A Young Creators League 2026 project for Plaksha University, under the Water Security theme.</p>
+    <p class="cta">
+      <a class="btn primary" href="https://oceaneye-ycl.streamlit.app">Open the full app</a>
+      <a class="btn" href="#try">Try it in your browser</a>
+    </p>
+  </div>
+
+  <figure class="holo">
+    <div class="holo-frame">
+      <div class="holo-screen">
+        <img class="holo-radar" src="web/img/hero_radar.jpg" width="1400" height="1170"
+          alt="Real Sentinel-1 radar image of the Oil Rocks oil field in the Caspian Sea. Oil slicks show as dark swirls.">
+        <img class="holo-det" src="web/img/hero_detections.png" width="1400" height="1170" alt="">
+        <div class="holo-sweep" aria-hidden="true"></div>
+      </div>
+    </div>
+    <figcaption class="readout">
+      <span>Sentinel-1 VV, descending pass</span>
+      <span>17 Oct 2026, 02:43 UTC</span>
+      <span>40.00–40.45°N, 50.50–51.20°E</span>
+      <span>19 patches flagged as likely oil</span>
+    </figcaption>
+  </figure>
 </header>
 
 <main>
@@ -60,19 +91,19 @@
           <line x1="150" y1="28" x2="70" y2="160" stroke-dasharray="5 4"/>
           <line x1="170" y1="28" x2="245" y2="160" stroke-dasharray="5 4"/>
           <!-- echo back from rough sea -->
-          <path d="M78 150 Q110 95 145 32" stroke="#2a7a3a" stroke-width="2"/>
+          <path d="M78 150 Q110 95 145 32" style="stroke:var(--holo)" stroke-width="2"/>
           <!-- mirror bounce off oil -->
-          <line x1="245" y1="160" x2="312" y2="95" stroke="#b33"/>
+          <line x1="245" y1="160" x2="312" y2="95" style="stroke:var(--oil)"/>
         </g>
         <path d="M10 170 q8 -9 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0" fill="none" stroke="currentColor" stroke-width="1.6"/>
         <line x1="160" y1="170" x2="312" y2="170" stroke="currentColor" stroke-width="1.6"/>
-        <rect x="190" y="166" width="110" height="5" fill="#333" opacity=".75"/>
+        <rect x="190" y="166" width="110" height="5" style="fill:var(--oil)" opacity=".55"/>
         <text x="216" y="21" font-size="11" fill="currentColor">Sentinel-1</text>
         <text x="20" y="195" font-size="11" fill="currentColor">ripples (wind)</text>
-        <text x="20" y="210" font-size="11" fill="#2a7a3a">echo comes back</text>
+        <text x="20" y="210" font-size="11" style="fill:var(--holo)">echo comes back</text>
         <text x="20" y="225" font-size="11" fill="currentColor">= grey</text>
         <text x="190" y="195" font-size="11" fill="currentColor">oil film = smooth</text>
-        <text x="190" y="210" font-size="11" fill="#b33">bounces away</text>
+        <text x="190" y="210" font-size="11" style="fill:var(--oil)">bounces away</text>
         <text x="190" y="225" font-size="11" fill="currentColor">= dark</text>
       </svg>
       <figcaption>Rough sea sends the echo back, oil reflects it away.</figcaption>
@@ -151,7 +182,7 @@
   <p>We made a fake radar image where we know exactly where the oil is: a ship with a curved oil trail,
   a big calm-wind patch and a rain cell, plus realistic speckle noise.</p>
   <figure class="wide">
-    <img src="web/img/example_result.png" alt="Test scene result: oil trail outlined in red, rain cell in blue" loading="lazy">
+    <img src="web/img/example_result.png?v=2" alt="Test scene result: oil trail outlined in red, rain cell in blue" loading="lazy">
     <figcaption>The oil trail was found (87% overlap with the true shape, 95% of oil pixels found).
     The calm patch was ignored and the rain cell was marked as a look-alike.</figcaption>
   </figure>
@@ -161,7 +192,7 @@
   images from Oct 2026 and the program found "likely oil" on every one. On 17 Oct there was a huge
   swirling slick around the platforms:</p>
   <figure class="wide">
-    <img src="web/img/oilrocks_2026-10-17.png" alt="Oil Rocks 17 Oct 2026: swirling oil slick around the platforms, outlined in red and orange" loading="lazy">
+    <img src="web/img/oilrocks_2026-10-17.png?v=2" alt="Oil Rocks 17 Oct 2026: swirling oil slick around the platforms, outlined in red and orange" loading="lazy">
     <figcaption>Left: the radar image. Right: what the program marked. Red = likely oil, orange = possible.</figcaption>
   </figure>
   <p>Testing on real data also found two bugs that the fake scene never showed:</p>
@@ -241,7 +272,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
-<script src="web/oceaneye.js"></script>
-<script src="web/demo.js"></script>
+<script src="web/oceaneye.js?v=2"></script>
+<script src="web/demo.js?v=2"></script>
 </body>
 </html>

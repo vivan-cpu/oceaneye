@@ -1,0 +1,7 @@
+# same colours as the website (deep sea at night + hologram cyan)
+[theme]
+base = "dark"
+primaryColor = "#6fe3ff"
+backgroundColor = "#04121c"
+secondaryBackgroundColor = "#0a2233"
+textColor = "#d4e9f2"
