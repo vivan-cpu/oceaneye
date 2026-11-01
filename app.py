@@ -23,7 +23,9 @@ import detect
 import fetch
 from places import PLACES
 
-st.set_page_config(page_title="OceanEye", page_icon="🛰", layout="wide")
+LOGO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "img", "logo.png")
+st.set_page_config(page_title="OceanEye", page_icon=os.path.join(os.path.dirname(LOGO), "favicon-192.png"),
+                   layout="wide")
 
 st.markdown("""
 <style>
@@ -73,7 +75,10 @@ def on_place_change():
 
 
 # ---------------- header ----------------
-st.title("🛰 OceanEye")
+logo_b64 = base64.b64encode(open(LOGO, "rb").read()).decode()
+st.markdown(f'<h1 style="display:flex;align-items:center;gap:14px">'
+            f'<img src="data:image/png;base64,{logo_b64}" width="58" alt="">OceanEye</h1>',
+            unsafe_allow_html=True)
 st.caption("Spotting oil spills at sea with free Sentinel-1 radar images · YCL 2026 · Water Security")
 
 tab_scan, tab_how = st.tabs(["Scan the sea", "How it works"])

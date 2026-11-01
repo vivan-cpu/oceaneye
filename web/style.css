@@ -56,7 +56,8 @@ b { color: var(--pale); font-weight: 600; }
   backdrop-filter: blur(8px);   /* so text stays readable when the page scrolls under it */
   border-bottom: 1px solid var(--line);
 }
-.mark { font: 600 18px var(--display); color: var(--pale); text-decoration: none; letter-spacing: .02em; }
+.mark { display: inline-flex; align-items: center; gap: 10px; font: 600 18px var(--display); color: var(--pale); text-decoration: none; letter-spacing: .02em; }
+.mark img { display: block; }
 .links { display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .links a { color: var(--dim); text-decoration: none; font-size: 15px; }
 .links a:hover { color: var(--holo); }
