@@ -5,11 +5,12 @@
   let current = null;   // the image we last loaded
 
   // fig 1: show / hide the outlines the program drew, so you can compare with the plain radar image
-  const toggle = $("toggle-outlines"), outlines = $("outlines");
+  const toggle = $("toggle-outlines"), outlines = $("outlines"), tags = $("tags");
   toggle.addEventListener("click", () => {
     const on = toggle.getAttribute("aria-pressed") !== "true";
     toggle.setAttribute("aria-pressed", on);
     outlines.classList.toggle("off", !on);
+    tags.classList.toggle("off", !on);
     toggle.textContent = on ? "Hide what the program marked" : "Show what the program marked";
   });
 

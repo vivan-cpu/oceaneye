@@ -1,4 +1,4 @@
-"""make_logo.py - OceanEye logo: an eye. the iris is a radar screen, the pupil is a drop of oil
+"""make_logo.py - OceanEye browser tab icon: an eye. the iris is a radar screen, the pupil is a drop of oil
 (red, the same red the program draws around oil). flat, no glow.
 drawn big with Pillow, then shrunk so the edges are smooth.
     python make_logo.py          (writes into web/img)
@@ -54,10 +54,6 @@ def mark(size):
 
 
 os.makedirs(OUT, exist_ok=True)
-big = mark(512)
-big.save(os.path.join(OUT, "logo.png"), optimize=True)
-big.save(os.path.join(OUT, "logo_square.png"), optimize=True)
-mark(64).save(os.path.join(OUT, "logo-64.png"), optimize=True)
 mark(180).save(os.path.join(OUT, "apple-touch-icon.png"), optimize=True)
 for n in (16, 32, 48, 192):
     mark(n).save(os.path.join(OUT, f"favicon-{n}.png"), optimize=True)

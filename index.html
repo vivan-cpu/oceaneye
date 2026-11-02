@@ -11,16 +11,16 @@
 <link rel="apple-touch-icon" href="web/img/apple-touch-icon.png?v=4">
 <meta property="og:title" content="OceanEye - spotting oil spills from space">
 <meta property="og:description" content="A YCL 2026 student project: finding oil spills at sea using free Sentinel-1 radar satellite images.">
-<meta property="og:image" content="https://vivan-cpu.github.io/oceaneye/web/img/logo_square.png">
+<meta property="og:image" content="https://vivan-cpu.github.io/oceaneye/web/img/hero_radar.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="web/style.css?v=4">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="web/style.css?v=6">
 </head>
 <body>
 
 <header class="top">
-  <a class="mark" href="#top"><img src="web/img/logo-64.png?v=4" width="28" height="28" alt="">OceanEye</a>
+  <a class="mark" href="#top">OceanEye</a>
   <nav aria-label="Sections">
     <a href="#problem">Problem</a>
     <a href="#science">Science</a>
@@ -34,31 +34,44 @@
 
 <main id="top">
 
-<div class="intro">
-  <h1>OceanEye</h1>
-  <p class="lead">We find oil spills at sea using free radar images from the Sentinel-1 satellite.
-  Radar sees through clouds and at night, when normal photos can't.</p>
-  <p class="who">A Young Creators League 2026 project by three students from Rajkot, for Plaksha University,
-  under the Water Security theme.</p>
-  <p class="actions">
-    <a class="btn" href="https://oceaneye-ycl.streamlit.app">Open the full app</a>
-    <a href="#try">or try the detector here in your browser</a>
-  </p>
-</div>
-
-<figure class="fig1">
-  <div class="fig1-img">
-    <img src="web/img/hero_radar.jpg?v=4" width="1400" height="880" fetchpriority="high"
-      alt="Sentinel-1 radar image of the Oil Rocks oil field in the Caspian Sea, 17 October 2026. The sea is grey; oil slicks are black swirls.">
-    <img class="outlines" id="outlines" src="web/img/hero_detections.png?v=4" width="1400" height="880" alt="">
+<div class="hero">
+  <div class="intro">
+    <h1>Finding oil spills at sea in free radar images</h1>
+    <p class="lead">Radar sees through clouds and at night, when normal photos can't. OceanEye takes a Sentinel-1
+    image, marks the patches of sea that are smoother than they should be, and scores how likely each one is to be oil.</p>
+    <p class="who">A Young Creators League 2026 project by three students from Rajkot, for Plaksha University,
+    under the Water Security theme</p>
+    <p class="actions">
+      <a class="btn" href="https://oceaneye-ycl.streamlit.app">Open the full app</a>
+      <a class="btn quiet" href="#try">Try it in your browser</a>
+    </p>
   </div>
-  <figcaption>
-    <button type="button" class="toggle" id="toggle-outlines" aria-pressed="true">Hide what the program marked</button>
-    <span><b>Fig. 1.</b> Sentinel-1 radar image of the Oil Rocks oil field, Caspian Sea, 17 Oct 2026, 02:43 UTC.
-    Grey is windy sea, black is smooth water. The red and orange lines are what OceanEye marked, and
-    in the full image it found 19 patches it thinks are likely oil.</span>
-  </figcaption>
-</figure>
+
+  <figure class="fig1">
+    <div class="fig1-img">
+      <img src="web/img/hero_radar.jpg?v=4" width="1400" height="880" fetchpriority="high"
+        alt="Sentinel-1 radar image of the Oil Rocks oil field in the Caspian Sea, 17 October 2026. The sea is grey; oil slicks are black swirls.">
+      <img class="outlines" id="outlines" src="web/img/hero_detections.png?v=4" width="1400" height="880" alt="">
+      <!-- three of the program's real results for this image, same numbers as the app's table -->
+      <div class="tags" id="tags" aria-hidden="true">
+        <svg viewBox="0 0 1400 880" preserveAspectRatio="none">
+          <g class="t5"><line x1="727" y1="489" x2="560" y2="726"/><rect x="723" y="485" width="8" height="8"/></g>
+          <g class="t1"><line x1="336" y1="377" x2="150" y2="642"/><rect x="332" y="373" width="8" height="8"/></g>
+          <g class="t2"><line x1="977" y1="292" x2="900" y2="104"/><rect x="973" y="288" width="8" height="8"/></g>
+        </svg>
+        <span class="tag t5" style="left:34%;top:80%">#5 likely oil, 7.7 km²</span>
+        <span class="tag t1" style="left:2%;top:71%">#1 likely oil, score 5</span>
+        <span class="tag t2" style="left:56%;top:6%">#2 likely oil, score 5</span>
+      </div>
+    </div>
+    <figcaption>
+      <span><span class="fig">Fig. 1</span> Oil Rocks oil field, Caspian Sea, 17 Oct 2026, 02:43 UTC.
+      Grey is windy sea, black is smooth water. Red and orange lines are what the program marked.
+      In the full image it found 19 likely oil patches.</span>
+      <button type="button" class="toggle" id="toggle-outlines" aria-pressed="true">Hide what the program marked</button>
+    </figcaption>
+  </figure>
+</div>
 
 <section id="problem">
   <h2>The problem</h2>
@@ -109,7 +122,7 @@
         <text x="190" y="210" font-size="11" style="fill:var(--red)">bounces away</text>
         <text x="190" y="225" font-size="11" fill="currentColor">= dark</text>
       </svg>
-      <figcaption>Rough sea sends the echo back, oil reflects it away.</figcaption>
+      <figcaption>Rough sea sends the echo back, oil reflects it away</figcaption>
     </figure>
   </div>
 </section>
@@ -288,7 +301,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js" defer></script>
-<script src="web/oceaneye.js?v=4" defer></script>
-<script src="web/demo.js?v=4" defer></script>
+<script src="web/oceaneye.js?v=5" defer></script>
+<script src="web/demo.js?v=5" defer></script>
 </body>
 </html>

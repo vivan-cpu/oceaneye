@@ -1,7 +1,8 @@
-# same look as the website: black on white, red = the colour we draw around oil
+# same look as the website: cool ink grey, red = the colour we draw around oil
 [theme]
 base = "light"
 primaryColor = "#b8321f"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f1f3f4"
-textColor = "#15191c"
+backgroundColor = "#f5f7fa"
+secondaryBackgroundColor = "#eceff4"
+textColor = "#111827"
+font = "sans serif"
