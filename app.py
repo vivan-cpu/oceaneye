@@ -22,6 +22,7 @@ from streamlit_folium import st_folium
 import detect
 import fetch
 from places import PLACES
+import ground_check
 
 ICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "img", "favicon-192.png")
 st.set_page_config(page_title="OceanEye", page_icon=ICON, layout="wide")
@@ -77,7 +78,12 @@ def on_place_change():
 st.title("OceanEye")
 st.caption("Spotting oil spills at sea with free Sentinel-1 radar images · YCL 2026 · Water Security")
 
-tab_scan, tab_how = st.tabs(["Scan the sea", "How it works"])
+tab_scan, tab_ground, tab_how = st.tabs(["Scan the sea", "Camera & photo check", "How it works"])
+
+# ground check: camera / photo / light sensor + AI, then compared with the satellite result.
+# keep this block here (before the results part below, which calls st.stop())
+with tab_ground:
+    ground_check.render()
 
 with tab_how:
     st.markdown("""
@@ -109,9 +115,19 @@ almost no echo comes back, so **oil looks dark**.
 
 4+ = **likely oil**, 2–3 = **possible**, less = **probably a look-alike**.
 
+#### Checking from the ground (Camera & photo check tab)
+Radar from space is the main tool, but someone on a boat, a drone or the coast can also check the water.
+1. Stage 1 (rules) finds patches much darker than the water (thick crude) or with rainbow colours (thin film).
+2. Stage 2 (AI) gives each patch an oil probability and rejects shadows, rocks and weed. It needs labelled
+   photos to learn from, and we haven't trained it yet, so for now only stage 1 runs.
+3. If you enter where and when it was seen, the app compares it with the Sentinel-1 result:
+   a slick within 5 km of the spot counts as confirmed by satellite.
+
 #### Limits
 Calm water (wind < ~3 m/s), rain cells, algae films and ship wakes can also look dark, and very strong wind
 can hide oil. Anything flagged should be checked by a person.
+The camera check has not been tested on real spills yet. Once the AI is trained it will only be as good as
+the photos it learned from, and a tray of dyed oil is a model of the sea, not the sea.
 """)
 
 with tab_scan:

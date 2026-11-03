@@ -78,6 +78,25 @@ Score ≥4 = likely oil, 2-3 = possible, below 2 = probably look-alike.
 3. **Ripple tank**: clean vs oil vs no-wind, 5 tries each. _(fill in your table)_
 4. **Talking to people**: _(fill in - see video plan for ideas)_
 
+## Checking from the ground (camera and photo check)
+
+A satellite only passes every few days, so we added a way to check water yourself with a phone camera, a photo or
+the phone's light sensor (Phyphox app). It works on the website (in the browser, nothing uploaded) and in the app.
+
+1. **Stage 1, rules** (`crude_detect.py`, same maths in `web/ground-core.js`): finds patches much darker than the
+   water (thick crude) or with rainbow colours (a thin film).
+2. **Stage 2, AI** (`train_model.py`): a random forest that gives each patch an oil probability and should reject
+   shadows, rocks and weed. **It is not trained yet.** It needs 40+ labelled photos (see the README). Until then only
+   stage 1 runs, and the page says so.
+3. **Satellite check:** the app compares the spot with the Sentinel-1 result. A slick within 5 km counts as confirmed.
+
+We checked that the Python and JavaScript versions give the same answer on the same photo (same two patches, same
+pixel counts). What we have not done: test it on real spills, or train the AI.
+
+**What the panel might ask.** *Is the AI trained?* Not yet, and we say so on the site. *Why 5 km?* Satellite passes are
+days apart and oil drifts, so we allow some distance; a mismatch can just be timing. *Can a tray of dyed oil prove it
+works?* No, it's a model of the sea, not the sea.
+
 ## Questions the panel might ask
 
 **Why not just use normal satellite photos?** Clouds and night. Also thin oil is hard to see in normal
