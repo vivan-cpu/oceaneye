@@ -14,7 +14,7 @@
 <meta property="og:description" content="A YCL 2026 student project: finding oil spills at sea using free Sentinel-1 radar satellite images.">
 <meta property="og:image" content="https://vivan-cpu.github.io/oceaneye/web/img/hero_radar.jpg">
 <link rel="preload" href="web/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="web/style.css?v=12">
+<link rel="stylesheet" href="web/style.css?v=11">
 </head>
 <body>
 
@@ -27,7 +27,6 @@
     <a href="#method">Method</a>
     <a href="#testing">Testing</a>
     <a href="#ground">Ground check</a>
-    <a href="#app">App</a>
     <a href="#limits">Limits</a>
     <a href="#code">Code</a>
   </nav>
@@ -43,7 +42,7 @@
     <p class="who">A Young Creators League 2026 project by three students from Rajkot, for Plaksha University,
     under the Water Security theme</p>
     <p class="actions">
-      <a class="btn" href="#app">Open the full app</a>
+      <a class="btn" href="https://oceaneye-ycl.streamlit.app">Open the full app</a>
       <a class="btn quiet" href="#try">Try it in your browser</a>
     </p>
   </div>
@@ -325,24 +324,12 @@
   <div id="g-table"></div>
 
   <p class="actions">
-    <a class="btn" id="g-confirm" href="#app">Confirm with the satellite in the full app</a>
+    <a class="btn" id="g-confirm" href="https://oceaneye-ycl.streamlit.app/">Confirm with the satellite in the full app</a>
   </p>
   <p id="g-confirm-note"></p>
   <p>Give the real size of what the camera sees to get the area in cm&sup2;. We kept 8 photos out of the training
   to test it. It confirmed oil in all 4 oil photos and wrongly confirmed none of the 4 clean-water photos. That is
   a very small test, and it has not been tried on real spills at sea. For the open sea, use the radar.</p>
-</section>
-
-<section id="app">
-  <h2>The full app</h2>
-  <p>The full version is a Python app. You pick any area of sea on a map and a date, it downloads the real
-  Sentinel-1 image from Copernicus, hides land, shows the results on the map and exports GeoJSON for Google Earth
-  or QGIS. It runs right here, so there is only one place to go. If it has been asleep it takes about a minute
-  to wake up.</p>
-  <iframe id="app-frame" title="OceanEye full app" loading="lazy" allow="camera; geolocation"
-    src="https://oceaneye-ycl.streamlit.app/?embed=true"></iframe>
-  <p class="note"><a href="https://oceaneye-ycl.streamlit.app/" target="_blank" rel="noopener">Open the app in its own tab</a>
-  if it feels cramped on a phone.</p>
 </section>
 
 <section id="limits">
@@ -365,7 +352,7 @@
   the real Sentinel-1 image from Copernicus, hides land, shows results on the map and exports GeoJSON for
   Google Earth or QGIS.</p>
   <p class="actions">
-    <a class="btn" href="#app">Open the full app</a>
+    <a class="btn" href="https://oceaneye-ycl.streamlit.app">Open the full app</a>
     <a id="repo-link" href="https://github.com/vivan-cpu/oceaneye">View the code on GitHub</a>
   </p>
 
@@ -400,6 +387,6 @@
 <script src="web/oceaneye.js?v=5" defer></script>
 <script src="web/demo.js?v=6" defer></script>
 <script src="web/ground-core.js?v=2" defer></script>
-<script src="web/ground.js?v=5" defer></script>
+<script src="web/ground.js?v=4" defer></script>
 </body>
 </html>

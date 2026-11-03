@@ -125,12 +125,6 @@
       <th>area</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
-  // the app lives inside this page, so "confirm" loads it with the spot filled in and scrolls to it
-  $("g-confirm").addEventListener("click", () => {
-    const f = $("app-frame");
-    if (f && $("g-confirm").dataset.src) f.src = $("g-confirm").dataset.src;
-  });
-
   function updateConfirm() {
     const a = $("g-confirm");
     const lat = parseFloat($("g-lat").value), lon = parseFloat($("g-lon").value);
@@ -138,10 +132,9 @@
     if (isFinite(lat) && isFinite(lon)) { q.set("lat", lat); q.set("lon", lon); }
     if ($("g-date").value) q.set("date", $("g-date").value);
     if (last) q.set("ground", last.status);
-    q.set("embed", "true");
-    a.dataset.src = APP_URL + "?" + q;
+    a.href = APP_URL + (q.toString() ? "?" + q : "");
     $("g-confirm-note").textContent = isFinite(lat) && isFinite(lon)
-      ? "Loads the full app below with this spot filled in. Go to the Camera & photo check tab and press Set the satellite scan to this spot."
+      ? "Opens the full app with this spot filled in. Go to the Camera & photo check tab and press Set the satellite scan to this spot."
       : "Add the latitude and longitude above so the full app knows where to look.";
   }
 
