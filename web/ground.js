@@ -198,8 +198,7 @@
       stopCamera();
       setStatus("Loading the example photo...");
       const im = new Image();
-      im.src = ex.file;
-      await im.decode();
+      await new Promise((ok, bad) => { im.onload = ok; im.onerror = () => bad(new Error("image didn't load")); im.src = ex.file; });
       run(grab(im, im.naturalWidth, im.naturalHeight));
       $("g-credit").textContent = `Example photo: ${ex.title} by ${ex.author} (${ex.licence}). ${ex.page}`;
     } catch (e) {
