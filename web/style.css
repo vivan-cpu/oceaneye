@@ -1,6 +1,6 @@
 /* OceanEye
-   idea: a radar printout on a lab bench. grey sea, black slicks, red pen marks.
-   neutrals are a cool ink grey, the only accent is the red the program draws around oil.
+   idea: a radar screen at night. navy sea, black slicks, red marks where the program found oil.
+   neutrals are navy, the blue is for actions, the red is only ever used for oil.
    type: IBM Plex Sans, plus Plex Mono only for real figures (km², scores, dates).
    all spacing on a 4px grid. every text colour checked for 4.5:1 contrast.
    based on the unslop method by Damir Sokolovsky (@heydamir), CC BY 4.0 */
@@ -12,42 +12,36 @@
 @font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
 
 :root {
-  --bg: #f5f7fa;
-  --card: #ffffff;
-  --raised: #eceff4;
-  --text: #111827;
-  --text-2: #4b5565;
-  --muted: #646d80;               /* 4.8:1 on the page */
-  --line: rgba(17, 24, 39, .08);  /* hairlines */
-  --edge: rgba(17, 24, 39, .28);  /* control borders, need 3:1 */
-  --red: #b8321f;                 /* likely oil, the accent */
-  --orange: #c77a0a;
-  --blue: #3d79c4;
+  color-scheme: dark;
+  --bg: #060c1c;                  /* deep navy, like the sea at night */
+  --card: #0c1530;
+  --raised: #142046;
+  --text: #eaf0ff;
+  --text-2: #b6c3e2;              /* 10:1 on the page */
+  --muted: #8fa0c6;               /* 6.7:1 on the page */
+  --line: rgba(160, 190, 255, .13);   /* hairlines */
+  --edge: rgba(160, 190, 255, .4);    /* control borders, need 3:1 */
+  --blue: #5ea6ff;                /* actions and links */
+  --blue-hi: #93c4ff;
+  --red: #ff7a6b;                 /* likely oil, kept for results only */
+  --orange: #f2a516;
   --ease: cubic-bezier(.22, 1, .36, 1);
   --sans: "IBM Plex Sans", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0d14; --card: #11141c; --raised: #1a1e28;
-    --text: #eef0f5; --text-2: #a3a9b8; --muted: #7a8296;
-    --line: rgba(238, 240, 245, .08); --edge: rgba(238, 240, 245, .3);
-    --red: #ff7a6b;
-  }
 }
 
 * { box-sizing: border-box; }
 html { scroll-padding-top: 16px; }
 body {
   margin: 0;
-  background: var(--bg);
+  background: linear-gradient(#0a1534, var(--bg) 760px) no-repeat var(--bg);   /* a tone shift inside the navy, no second hue */
   color: var(--text);
   font: 400 17px/28px var(--sans);
 }
-::selection { background: var(--red); color: #fff; }
-a { color: var(--text); text-decoration-color: var(--edge); text-underline-offset: 4px; transition: color .15s var(--ease), text-decoration-color .15s var(--ease); }
-a:hover { color: var(--red); text-decoration-color: currentColor; }
-:focus-visible { outline: 2px solid var(--red); outline-offset: 4px; border-radius: 4px; }
+::selection { background: var(--blue); color: #06102a; }
+a { color: var(--blue); text-decoration-color: rgba(94, 166, 255, .45); text-underline-offset: 4px; transition: color .15s var(--ease), text-decoration-color .15s var(--ease); }
+a:hover { color: var(--blue-hi); text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--blue-hi); outline-offset: 4px; border-radius: 4px; }
 button, summary, label.file { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 b, strong { font-weight: 500; }
@@ -57,10 +51,10 @@ b, strong { font-weight: 500; }
   max-width: 1200px; margin: 0 auto; padding: 20px 32px;
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px;
 }
-.mark { font-size: 18px; font-weight: 600; line-height: 1; text-decoration: none; }
+.mark { font-size: 18px; font-weight: 600; line-height: 1; text-decoration: none; color: var(--text); }
 .top nav { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 15px; }
 .top nav a { color: var(--text-2); text-decoration: none; }
-.top nav a:hover { color: var(--text); }
+.top nav a:hover { color: var(--blue-hi); }
 
 /* ---------- hero: text on the left, fig 1 on the right ---------- */
 main { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
@@ -82,15 +76,15 @@ h1 { font-size: clamp(36px, 4.6vw, 56px); line-height: 1.06; font-weight: 500; l
   text-decoration: none;
   transition: background-color .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease), transform .15s var(--ease);
 }
-.btn { background: var(--text); color: var(--bg); border: 1px solid var(--text); }
-.btn:hover { background: var(--red); border-color: var(--red); color: #fff; }
+.btn { background: var(--blue); color: #06102a; border: 1px solid var(--blue); }
+.btn:hover { background: var(--blue-hi); border-color: var(--blue-hi); color: #06102a; }
 .btn.quiet, button, label.file { background: var(--card); color: var(--text); border: 1px solid var(--edge); }
-.btn.quiet:hover, button:hover:not(:disabled), label.file:hover { background: var(--raised); color: var(--text); border-color: var(--edge); }
+.btn.quiet:hover, button:hover:not(:disabled), label.file:hover { background: var(--raised); color: var(--text); border-color: var(--blue); }
 .btn:active, button:active:not(:disabled), label.file:active { transform: scale(.98); }
 button:disabled { opacity: .45; }
 
 .fig1 { margin: 0; }
-.fig1-img { position: relative; border-radius: 12px; overflow: hidden; background: #777; box-shadow: 0 8px 24px rgba(17, 24, 39, .08); }
+.fig1-img { position: relative; border-radius: 12px; overflow: hidden; background: #777; border: 1px solid var(--line); }
 .fig1-img img { display: block; width: 100%; height: auto; }
 .fig1 .outlines, .fig1 .tags { position: absolute; inset: 0; transition: opacity .16s var(--ease); }
 .fig1 .off { opacity: 0; }
@@ -149,7 +143,7 @@ details { flex-basis: 100%; font-size: 15px; }
 details summary { font-weight: 500; }
 details label { display: block; margin: 12px 0; }
 details output { font-family: var(--mono); font-size: 14px; }
-details input[type=range] { width: 100%; max-width: 380px; display: block; accent-color: var(--red); }
+details input[type=range] { width: 100%; max-width: 380px; display: block; accent-color: var(--blue); }
 details button { margin-top: 4px; }
 details input[type=number], details input[type=date] {
   display: block; width: 100%; max-width: 240px; height: 40px; margin-top: 4px; padding: 0 12px;
@@ -160,8 +154,7 @@ details input[type=number], details input[type=date] {
 #g-table { overflow-x: auto; max-width: none; }
 #g-confirm-note { color: var(--muted); font-size: 15px; margin-top: 8px; }
 .status { color: var(--muted); font-size: 15px; }
-.warn { background: #fff4d6; color: #5c4400; border: 1px solid #e0c36a; border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 15px; }
-@media (prefers-color-scheme: dark) { .warn { background: #33290f; color: #f3dc9a; border-color: #6b5620; } }
+.warn { background: #33290f; color: #f3dc9a; border: 1px solid #6b5620; border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 15px; }
 .viewer { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: none; }
 canvas { width: 100%; display: block; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; }
 #table-wrap { overflow-x: auto; max-width: none; }
@@ -175,8 +168,8 @@ canvas { width: 100%; display: block; background: var(--raised); border: 1px sol
   border: 1px dashed var(--edge); border-radius: 12px; background: var(--card);
   transition: border-color .15s var(--ease), background-color .15s var(--ease);
 }
-.drop:hover, .drop.over { border-color: var(--red); background: var(--raised); }
-.drop:focus-within { outline: 2px solid var(--red); outline-offset: 4px; }
+.drop:hover, .drop.over { border-color: var(--blue); background: var(--raised); }
+.drop:focus-within { outline: 2px solid var(--blue-hi); outline-offset: 4px; }
 .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .drop-main { font-weight: 500; }
 .drop-sub { font-size: 14px; color: var(--muted); }
