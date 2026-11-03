@@ -177,6 +177,8 @@ canvas { width: 100%; display: block; background: var(--raised); border: 1px sol
 details.what { max-width: 40rem; margin: 12px 0; flex-basis: auto; }
 details.what p { margin: 8px 0 0; }
 
+#app-frame { display: block; width: 100%; max-width: none; height: 820px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); margin: 20px 0 8px; }
+
 /* ---------- footer ---------- */
 footer { max-width: 1200px; margin: 64px auto 0; padding: 24px 32px 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; line-height: 24px; }
 footer p { max-width: 44rem; margin: 0 0 8px; }
