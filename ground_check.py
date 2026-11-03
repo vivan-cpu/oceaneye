@@ -275,6 +275,9 @@ def render():
         img = None
         sensor_res = None
         if method == "Camera":
+            st.caption("This box uses your device's default camera, which is the front one on most phones. "
+                       "For the back camera on a phone, pick Photo, tap the upload box and choose Take Photo. "
+                       "The website version also has a Flip camera button.")
             shot = st.camera_input("Point at the water and take a picture", key="gc_cam")
             if shot is not None:
                 img = decode_image(shot)
@@ -286,7 +289,7 @@ def render():
                 ss.gc_example = "oil"
             if e2.button("Example: clean water", width="stretch"):
                 ss.gc_example = "clean"
-            f = st.file_uploader("Or drop a photo of the water here", type=["jpg", "jpeg", "png", "webp"], key="gc_photo")
+            f = st.file_uploader("Take a photo with the back camera, or upload one", type=["jpg", "jpeg", "png", "webp"], key="gc_photo")
             if f is not None:
                 ss.pop("gc_example", None)
                 img = decode_image(f)

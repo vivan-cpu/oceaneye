@@ -139,10 +139,11 @@
   }
 
   // ---------- camera ----------
+  let facing = "environment";   // back camera first, the flip button switches
   async function startCamera() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false,
+        video: { facingMode: { ideal: facing }, width: { ideal: 1280 } }, audio: false,
       });
     } catch (e) {
       setStatus("Couldn't open the camera: " + e.message + ". Allow camera access, or upload a photo instead.");
@@ -151,7 +152,7 @@
     video.srcObject = stream;
     await video.play();
     $("g-cam").textContent = "Stop camera";
-    $("g-snap").disabled = false; $("g-live").disabled = false;
+    $("g-snap").disabled = false; $("g-live").disabled = false; $("g-flip").disabled = false;
     setStatus("Camera on. Point it at the water and press Check this frame.");
     preview();
   }
@@ -161,7 +162,7 @@
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;
     $("g-cam").textContent = "Start camera";
-    $("g-snap").disabled = true; $("g-live").disabled = true;
+    $("g-snap").disabled = true; $("g-live").disabled = true; $("g-flip").disabled = true;
   }
 
   function preview() {
@@ -183,6 +184,10 @@
   }
 
   $("g-cam").addEventListener("click", () => (stream ? stopCamera() : startCamera()));
+  $("g-flip").addEventListener("click", () => {
+    facing = facing === "environment" ? "user" : "environment";
+    if (stream) { stopCamera(); startCamera(); }
+  });
   $("g-snap").addEventListener("click", checkFrame);
   $("g-live").addEventListener("change", (e) => {
     clearInterval(liveTimer); liveTimer = null;
