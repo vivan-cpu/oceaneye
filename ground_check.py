@@ -29,8 +29,8 @@ SENSOR_CHANGE = 20   # % light change that counts as a sensor spill
 
 
 # ======================= pure logic (no UI) =======================
-@st.cache_resource(show_spinner=False)
 def get_model():
+    # not cached: load_model also sets the AI cut-offs and summary, which must be set on every run
     return crude.load_model()
 
 
