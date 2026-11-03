@@ -340,7 +340,8 @@
       p.features = features(maps, p, w, h);
       if (model) {
         p.prob = predict(model, p.features);
-        p.verdict = p.prob >= S.AI_OIL ? "CONFIRMED OIL" : p.prob < S.AI_NOT_OIL ? "AI REJECTED" : "UNCERTAIN";
+        const t = model.thresholds || { oil: S.AI_OIL, reject: S.AI_NOT_OIL };   // picked by train_model.py
+        p.verdict = p.prob >= t.oil ? "CONFIRMED OIL" : p.prob < t.reject ? "AI REJECTED" : "UNCERTAIN";
       } else {
         p.prob = null;
         p.verdict = "RULE ONLY";

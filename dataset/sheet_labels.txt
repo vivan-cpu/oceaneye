@@ -1,0 +1,23 @@
+# Labels made by looking at each patch (contact sheets from make_candidates.py).
+# oil=  patches that are oil on water or on a puddle (rainbow sheen or dark oil film)
+# skip= patches I could not tell, so they are left out of training (no guessing)
+# everything else on a listed sheet is not oil (skyline, dock, trees, boom, leaf, asphalt ...)
+# Sheets 101-106 are only the patches of the 19 oil-search photos that really show oil.
+# Patches from photos of clean water (clean_*) count as not oil without being listed here.
+# Patches from the other oil-search photos (ships, maps, people ...) are left out.
+101 oil=1,2,3,4,5,6,7,8 skip=9,11,12,13,15,16,17,20
+102 oil=1,15,17,20 skip=2,4,8,9,10,11,12,13,14,16,18,19
+103 oil=3,4,5,6 skip=1,2,7,13,14,16,17,18
+104 oil=14,15,16,17,20 skip=9,18
+105 oil=2,5,10,13,15,17,18,19,20 skip=1,16
+106 oil=1,2,3 skip=4,5
+# second round (categories about oil on water). sheets 301-309 are the patches of 37 photos that show oil
+301 oil=9,10,11,12,13,14,15,16,17,18,19 skip=3,4,7,8
+302 oil=3,6,7,17,20 skip=15,16,18,19
+303 oil=17 skip=1,2,3,4,9,13,14,16,18,19,20
+304 oil=5,10 skip=1,2,3,4,6,7,8,9,11,12,14,15,16,17,18,19,20
+305 oil=4,10,11,12,13 skip=1,2,3,5,6,7,8,9,17,19,20
+306 oil=1,2 skip=5,10,11,16,18
+307 oil=12 skip=1,2,3,6,9,10,11,15,16,20
+308 oil=3,4,6,7,9,10,12,14,15,16,17,19 skip=1,2,11,13,18,20
+309 oil=8,11,12,13 skip=1,2,3,4,5,6,7,9,10

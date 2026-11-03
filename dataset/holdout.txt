@@ -1,0 +1,9 @@
+# photos kept out of training on purpose, so we can show the AI photos it has never seen
+oil_321837
+oil_109406402
+oil_14245407
+oil_4081809
+clean_11280392
+clean_12981752
+clean_157146221
+clean_124119328

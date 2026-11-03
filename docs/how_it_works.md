@@ -86,14 +86,18 @@ the phone's light sensor (Phyphox app). It works on the website (in the browser,
 1. **Stage 1, rules** (`crude_detect.py`, same maths in `web/ground-core.js`): finds patches much darker than the
    water (thick crude) or with rainbow colours (a thin film).
 2. **Stage 2, AI** (`train_model.py`): a random forest that gives each patch an oil probability and should reject
-   shadows, rocks and weed. **It is not trained yet.** It needs 40+ labelled photos (see the README). Until then only
-   stage 1 runs, and the page says so.
+   shadows, rocks and weed. Trained on 782 patches from 145 openly licensed Wikimedia Commons photos (70 oil patches,
+   mostly thin rainbow films on puddles and harbour water; labelled by eye, skipping any patch we couldn't tell).
+   Credits for every photo: `dataset/credits.csv`. Honest test, where no photo is in training and test at the same
+   time: finds about 56% of oil patches, wrongly calls about 3% of non-oil patches oil, balanced accuracy 77%
+   (always answering "not oil" would score 91% plain accuracy, so we don't quote that). 8 photos were held out:
+   all 4 oil photos were confirmed, none of the 4 clean-water photos was wrongly confirmed.
 3. **Satellite check:** the app compares the spot with the Sentinel-1 result. A slick within 5 km counts as confirmed.
 
 We checked that the Python and JavaScript versions give the same answer on the same photo (same two patches, same
-pixel counts). What we have not done: test it on real spills, or train the AI.
+pixel counts). What we have not done: test it on real spills at sea, or collect hundreds more oil examples.
 
-**What the panel might ask.** *Is the AI trained?* Not yet, and we say so on the site. *Why 5 km?* Satellite passes are
+**What the panel might ask.** *Is the AI trained?* Yes, but on a small set (70 oil patches), and we say that on the site. *Why 5 km?* Satellite passes are
 days apart and oil drifts, so we allow some distance; a mismatch can just be timing. *Can a tray of dyed oil prove it
 works?* No, it's a model of the sea, not the sea.
 

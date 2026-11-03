@@ -118,16 +118,17 @@ almost no echo comes back, so **oil looks dark**.
 #### Checking from the ground (Camera & photo check tab)
 Radar from space is the main tool, but someone on a boat, a drone or the coast can also check the water.
 1. Stage 1 (rules) finds patches much darker than the water (thick crude) or with rainbow colours (thin film).
-2. Stage 2 (AI) gives each patch an oil probability and rejects shadows, rocks and weed. It needs labelled
-   photos to learn from, and we haven't trained it yet, so for now only stage 1 runs.
+2. Stage 2 (AI) gives each patch an oil probability and rejects shadows, rocks and weed. We trained it on 782
+   patches from 145 openly licensed photos. On photos it had never seen it found about half of the oil patches
+   and wrongly called about 3% of the others oil, so it helps but it isn't reliable yet.
 3. If you enter where and when it was seen, the app compares it with the Sentinel-1 result:
    a slick within 5 km of the spot counts as confirmed by satellite.
 
 #### Limits
 Calm water (wind < ~3 m/s), rain cells, algae films and ship wakes can also look dark, and very strong wind
 can hide oil. Anything flagged should be checked by a person.
-The camera check has not been tested on real spills yet. Once the AI is trained it will only be as good as
-the photos it learned from, and a tray of dyed oil is a model of the sea, not the sea.
+The camera AI learned from only 70 patches of oil, mostly thin rainbow films seen up close, and has not been
+tested on real spills at sea.
 """)
 
 with tab_scan:
@@ -186,8 +187,17 @@ with tab_scan:
                 want_s2 = st.checkbox("Also get a normal colour photo (Sentinel-2)")
 
         elif source == "Upload GeoTIFF":
-            upload = st.file_uploader("Sentinel-1 VV image (.tif)", type=["tif", "tiff"])
-            st.caption("From browser.dataspace.copernicus.eu → Sentinel-1 → VV → Download → Analytical → TIFF 32-bit.")
+            st.caption("Don't have a radar file? Use Live satellite (it downloads one for you) or the Test scene.")
+            upload = st.file_uploader("Drop a Sentinel-1 radar file here (.tif)", type=["tif", "tiff"])
+            with st.expander("What is a GeoTIFF?"):
+                st.markdown(
+                    "A GeoTIFF is a picture that knows where it is on Earth. A normal photo file is only a grid of "
+                    "coloured dots. A GeoTIFF also stores which piece of the Earth the grid covers and how big each "
+                    "dot is on the ground, so a computer can put it on a map and measure an area in km².\n\n"
+                    "For a radar picture each dot holds a number for how strong the echo was, not a colour. OceanEye "
+                    "needs those real numbers, which a screenshot can't give it.\n\n"
+                    "To get one yourself: browser.dataspace.copernicus.eu → Sentinel-1 → VV → Download → "
+                    "Analytical → TIFF 32-bit.")
         else:
             st.caption("A simulated radar image with an oil trail, a calm-wind patch and a rain cell, "
                        "to check the program works.")

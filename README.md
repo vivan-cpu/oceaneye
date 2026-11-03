@@ -28,12 +28,14 @@ Why radar and not normal photos? Radar works through clouds and at night. During
 There is also a physical model (`hardware/ripple_tank/`) that shows the science on a table.
 
 **Camera & photo check.** A second tab checks water from the ground with a phone or laptop camera, a photo,
-or a phone's light sensor (Phyphox app). Rules find dark or rainbow-coloured patches. A small AI model is
-meant to give each one an oil probability, but it is **not trained yet** (it needs labelled photos), so for
-now only the rules run. The app can compare the spot with the Sentinel-1 result: a slick within 5 km counts
-as confirmed by satellite. Area is shown in cm² if you enter the real size of the camera's view. The same
-camera and photo check also runs on the website (in the browser, nothing uploaded), and its "Confirm with
-the satellite" button opens the full app with the spot filled in. It has not been tested on real spills.
+or a phone's light sensor (Phyphox app). Stage 1 (rules) finds dark or rainbow-coloured patches. Stage 2 (a small
+AI model) gives each one an oil probability. The AI was trained on 782 patches from 145 openly licensed photos
+(70 patches of oil, mostly thin rainbow films seen up close). On photos it had never seen it found about half of
+the oil patches and wrongly called about 3% of the others oil, so it helps but is not reliable yet. The app can
+compare the spot with the Sentinel-1 result: a slick within 5 km counts as confirmed by satellite. Area is shown
+in cm² if you enter the real size of the camera's view. The same check also runs on the website (in the browser,
+nothing uploaded), and its "Confirm with the satellite" button opens the full app with the spot filled in.
+It has not been tested on real spills at sea.
 
 ## Folder
 
@@ -98,15 +100,23 @@ Good first tries: Oil Rocks (Caspian) 17 Oct 2026 (huge slick); Kerch Strait 18 
 
 ## Training the camera AI
 
-1. Put 40+ photos of water in a folder called `photos/` - with oil (cooking oil stirred with cocoa powder
-   looks like crude) and without (leaves, stones, shadows, dark cloth).
-2. `python3 crude_detect.py --image photos/*.jpg --save-candidates`
-3. Open `candidates/` and drag every picture into `candidates/oil/` or `candidates/not_oil/`.
-4. `python3 train_model.py` - prints accuracy, missed oil and false alarms, saves `oil_model.pkl`
-   (for the app) and `web/oil_model.json` (the same AI for the website).
-5. Push both files to GitHub. The online app and the website then use the AI.
+The AI in `web/oil_model.json` (website) and `oil_model.pkl` (app) was trained on openly licensed photos
+from Wikimedia Commons, not on our own photos. 8 photos listed in `dataset/holdout.txt` are kept out of the training
+on purpose, and the website's example photos come from them. `dataset/credits.csv` lists the author and licence of every
+photo used. The photos themselves are not in the repo.
 
-Test on photos the AI has never seen before quoting an accuracy number.
+1. `python dataset/get_photos.py` downloads the photos (slowly, Wikimedia throttles fast downloads).
+2. `python dataset/make_candidates.py` runs the rules on every photo and saves each patch it finds, plus
+   numbered contact sheets in `candidates/sheets/`.
+3. Look at each sheet and write what you see into `dataset/sheet_labels.txt` (oil patches, unclear ones, the
+   rest count as not oil). Then `python dataset/apply_labels.py`.
+4. `python train_model.py` prints accuracy, missed oil and false alarms, and saves `oil_model.pkl` and
+   `web/oil_model.json`. Push both files to GitHub and the app and the website use the new AI.
+
+Accuracy is measured with every photo kept out of training while it is tested. To train on your own photos
+instead (cooking oil stirred with cocoa powder looks like crude), put 40+ photos of water in `photos/` and use
+`python crude_detect.py --image photos/*.jpg --save-candidates`, then sort the patches into
+`candidates/oil/` and `candidates/not_oil/` (delete `dataset/labels.csv` so the folders are used).
 
 The light sensor only works when the app runs on a laptop on the same Wi-Fi as the phone,
 not in the online version.
@@ -119,7 +129,7 @@ not in the online version.
 - Sentinel-1 passes each place only every few days, so it's for checking, not instant alarms.
 - Satellite rules were tuned on a few cases, not proven on hundreds. Next step would be training a
   machine-learning model on a labelled radar dataset.
-- The camera check has not been tested on real spills. Once the AI is trained it will only be as good as the
-  photos it learned from, and a tray of dyed oil is a model, not the sea. Satellite passes are days apart and oil drifts, so "not confirmed" can just be timing.
+- The camera AI learned from only 70 oil patches, mostly thin films seen up close, and finds about half of the oil
+  patches on photos it hasn't seen. It has not been tested on real spills at sea. Satellite passes are days apart and oil drifts, so "not confirmed" can just be timing.
 
 Contains modified Copernicus Sentinel data.

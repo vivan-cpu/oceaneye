@@ -27,7 +27,8 @@ MIN_PATCH_AREA = 800    # ignore patches smaller than this (pixels)
 WINDOW = 21             # size of the area used to measure texture/colour (odd)
 AI_OIL = 0.60           # AI confidence needed to CONFIRM oil
 AI_NOT_OIL = 0.40       # below this the AI REJECTS the patch
-MODEL_PATH = "oil_model.pkl"
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "oil_model.pkl")
+MODEL_SUMMARY = ""
 CANDIDATE_DIR = "candidates"
 MAX_WIDTH = 1400
 WORK_SIDE = 800         # photos are shrunk to this before analysis (same in the website's JS)
@@ -143,7 +144,11 @@ def load_model():
         return None
     import joblib
     data = joblib.load(MODEL_PATH)
-    print(f"AI model loaded ({data.get('accuracy', '?')} cross-validated accuracy)")
+    global AI_OIL, AI_NOT_OIL, MODEL_SUMMARY
+    MODEL_SUMMARY = data.get("summary", "")
+    if "thresholds" in data:          # train_model.py picked these from its honest test
+        AI_OIL, AI_NOT_OIL = data["thresholds"]["oil"], data["thresholds"]["reject"]
+    print(f"AI model loaded ({data.get('summary', data.get('accuracy', '?'))})")
     return data["model"]
 
 

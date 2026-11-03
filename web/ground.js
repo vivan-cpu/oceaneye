@@ -19,15 +19,32 @@
   video.playsInline = true; video.muted = true;
   const work = document.createElement("canvas");
 
-  fetch("web/oil_model.json", { cache: "no-cache" })
-    .then((r) => (r.ok ? r.json() : null))
-    .then((m) => {
-      model = m;
-      $("g-ai").textContent = m
-        ? `AI model loaded (${m.trees.length} trees, ${m.accuracy} accuracy on our test photos).`
-        : "AI model not trained yet, so only the rules (stage 1) are used.";
-    })
-    .catch(() => { $("g-ai").textContent = "AI model not found - rules only."; });
+  // the AI file is about 470 KB (120 KB when compressed), so it is only fetched when this section comes
+  // near the screen or is used, not when the page first opens
+  let modelPromise = null;
+  function loadModel() {
+    if (!modelPromise) {
+      $("g-ai").textContent = "Loading the AI model...";
+      modelPromise = fetch("web/oil_model.json")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((m) => {
+          model = m;
+          $("g-ai").textContent = m
+            ? `AI model loaded (${m.trees.length} trees). ${m.summary || ""}`
+            : "AI model not found, so only the rules (stage 1) are used.";
+        })
+        .catch(() => { $("g-ai").textContent = "Couldn't load the AI model, so only the rules (stage 1) are used."; });
+    }
+    return modelPromise;
+  }
+  if ("IntersectionObserver" in window) {
+    const watcher = new IntersectionObserver((hits) => {
+      if (hits.some((h) => h.isIntersecting)) { watcher.disconnect(); loadModel(); }
+    }, { rootMargin: "600px" });
+    watcher.observe($("ground"));
+  } else {
+    loadModel();
+  }
 
   function setStatus(t) { $("g-status").textContent = t; }
 
@@ -43,7 +60,8 @@
 
   function num(id) { const v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : null; }
 
-  function run(img) {
+  async function run(img) {
+    await loadModel();
     const t0 = performance.now();
     const res = GroundCore.analyse(img.data, img.width, img.height, model);
     res.ms = Math.round(performance.now() - t0);
@@ -171,10 +189,32 @@
     if (e.target.checked) { checkFrame(); liveTimer = setInterval(checkFrame, LIVE_EVERY_MS); }
   });
 
+  // ---------- example photos (openly licensed, from Wikimedia Commons) ----------
+  let examples = null;
+  async function loadExample(kind) {
+    try {
+      if (!examples) examples = await fetch("web/examples/examples.json").then((r) => r.json());
+      const ex = examples[kind];
+      stopCamera();
+      setStatus("Loading the example photo...");
+      const im = new Image();
+      im.src = ex.file;
+      await im.decode();
+      run(grab(im, im.naturalWidth, im.naturalHeight));
+      $("g-credit").textContent = `Example photo: ${ex.title} by ${ex.author} (${ex.licence}). ${ex.page}`;
+    } catch (e) {
+      setStatus("Couldn't load the example: " + e.message);
+    }
+  }
+  $("g-ex-oil").addEventListener("click", () => loadExample("oil"));
+  $("g-ex-clean").addEventListener("click", () => loadExample("clean"));
+  if (window.wireDrop) wireDrop($("g-drop"), $("g-file"));
+
   // ---------- photo ----------
   $("g-file").addEventListener("change", (e) => {
     const f = e.target.files[0];
     if (!f) return;
+    $("g-credit").textContent = "";
     stopCamera();
     const url = URL.createObjectURL(f);
     const im = new Image();

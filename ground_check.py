@@ -10,8 +10,9 @@ Used from app.py:   with tab_ground: ground_check.render()
 """
 import datetime as dt
 import json
-import math
 import ipaddress
+import math
+import os
 import urllib.parse
 import urllib.request
 
@@ -36,6 +37,20 @@ def get_model():
 def decode_image(uploaded):
     data = np.frombuffer(uploaded.getvalue(), np.uint8)
     return cv2.imdecode(data, cv2.IMREAD_COLOR)
+
+
+def load_example(kind):
+    """The two example photos that come with the repo (openly licensed, from Wikimedia Commons)."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    try:
+        with open(os.path.join(here, "web", "examples", "examples.json")) as f:
+            ex = json.load(f)[kind]
+        img = cv2.imread(os.path.join(here, ex["file"].replace("/", os.sep)))
+    except (OSError, KeyError, ValueError):
+        return None
+    if img is None:
+        return None
+    return img, f"Example photo: {ex['title']} by {ex['author']} ({ex['licence']}). {ex['page']}"
 
 
 def analyse_image(img, model, width_cm=None, height_cm=None):
@@ -154,6 +169,17 @@ def _qstatus(v):
     return v if v in KNOWN_STATUS else None
 
 
+def _num(text, allow_negative=False):
+    """Reads a number typed in a text box. Empty or not a number gives None."""
+    try:
+        v = float(str(text).strip().replace(",", "."))
+    except ValueError:
+        return None
+    if not math.isfinite(v) or (v <= 0 and not allow_negative):
+        return None
+    return v
+
+
 def _qfloat(v):
     try:
         return float(v) if v not in (None, "") else None
@@ -234,9 +260,12 @@ def render():
     st.markdown("Check water **from the ground** - a phone or laptop camera, a photo, or the phone's "
                 "light sensor. Then compare it with what the **satellite** saw at the same place.")
     if model is None:
-        st.info("AI model not trained yet, so only Stage 1 (rules) is used. "
-                "Train it with `train_model.py` and put `oil_model.pkl` next to app.py.")
+        st.info("The AI model file wasn't found, so only Stage 1 (rules) is used.")
+    else:
+        st.caption("AI model: " + (crude.MODEL_SUMMARY or "loaded") + ".")
 
+    st.caption("On a phone or tablet the [website version](https://vivan-cpu.github.io/oceaneye/#ground) "
+               "of this check is quicker and works without this app. It does the same check.")
     left, right = st.columns([1, 1.6], gap="large")
 
     with left:
@@ -252,31 +281,44 @@ def render():
                 if img is None:
                     st.error("Couldn't read that picture.")
         elif method == "Photo":
-            f = st.file_uploader("Photo of the water", type=["jpg", "jpeg", "png"], key="gc_photo")
+            e1, e2 = st.columns(2)
+            if e1.button("Example: oil on water", width="stretch"):
+                ss.gc_example = "oil"
+            if e2.button("Example: clean water", width="stretch"):
+                ss.gc_example = "clean"
+            f = st.file_uploader("Or drop a photo of the water here", type=["jpg", "jpeg", "png", "webp"], key="gc_photo")
             if f is not None:
+                ss.pop("gc_example", None)
                 img = decode_image(f)
                 if img is None:
                     st.error("Couldn't read that image - try a JPG or PNG.")
+            elif ss.get("gc_example") in ("oil", "clean"):
+                ex = load_example(ss.gc_example)
+                if ex is not None:
+                    img, credit = ex
+                    st.caption(credit)
         else:
             sensor_res = _sensor_ui(ss)
 
         with st.expander("Real size of the view (for area in cm²)"):
-            w_cm = st.number_input("Width (cm)", min_value=0.0, value=0.0, step=1.0, key="gc_w")
-            h_cm = st.number_input("Height (cm)", min_value=0.0, value=0.0, step=1.0, key="gc_h")
-            st.caption("e.g. the tray is 40 × 30 cm. Leave 0 to show % of the picture instead.")
+            w_cm = _num(st.text_input("Width (cm)", key="gc_w", placeholder="e.g. 40"))
+            h_cm = _num(st.text_input("Height (cm)", key="gc_h", placeholder="e.g. 30"))
+            st.caption("e.g. the tray is 40 × 30 cm. Leave empty to show % of the picture instead.")
 
         with st.expander("Where and when (for the satellite check)", expanded=True):
             c1, c2 = st.columns(2)
-            lat = c1.number_input("Latitude", value=q_lat, format="%.4f", key="gc_lat",
-                                  placeholder="e.g. 22.47")
-            lon = c2.number_input("Longitude", value=q_lon, format="%.4f", key="gc_lon",
-                                  placeholder="e.g. 69.62")
+            if q_lat is not None and "gc_lat" not in ss:
+                ss.gc_lat = str(q_lat)
+            if q_lon is not None and "gc_lon" not in ss:
+                ss.gc_lon = str(q_lon)
+            lat = _num(c1.text_input("Latitude", key="gc_lat", placeholder="e.g. 22.47"), allow_negative=True)
+            lon = _num(c2.text_input("Longitude", key="gc_lon", placeholder="e.g. 69.62"), allow_negative=True)
             when = st.date_input("Date seen", value=q_date or dt.date.today(), key="gc_date")
 
     with right:
         if img is not None:
             with st.spinner("checking the water..."):
-                res = analyse_image(img, model, w_cm or None, h_cm or None)
+                res = analyse_image(img, model, w_cm, h_cm)
             _show_result(res)
             ss.ground = {"status": res["status"], "is_spill": res["is_spill"],
                          "area_cm2": res["area_cm2"], "area_pct": res["area_pct"],

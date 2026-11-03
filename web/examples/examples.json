@@ -1,0 +1,16 @@
+{
+ "oil": {
+  "file": "web/examples/example_oil.jpg",
+  "title": "Dieselrainbow",
+  "author": "John (ex-user Guinnog)",
+  "licence": "CC BY-SA 2.5",
+  "page": "https://commons.wikimedia.org/wiki/File:Dieselrainbow.jpg"
+ },
+ "clean": {
+  "file": "web/examples/example_clean.jpg",
+  "title": "Boats in Padstow harbour - geograph.org.uk - 462874",
+  "author": "Kenneth Allen",
+  "licence": "CC BY-SA 2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Boats_in_Padstow_harbour_-_geograph.org.uk_-_462874.jpg"
+ }
+}

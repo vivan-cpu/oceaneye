@@ -103,6 +103,34 @@
   });
   $("btn-rerun").addEventListener("click", run);
 
+  // a real radar image that comes with the site
+  $("btn-real").addEventListener("click", async () => {
+    try {
+      status("downloading the example radar image (1.4 MB)...");
+      const resp = await fetch("web/sample_oilrocks_2026-10-17.tif");
+      if (!resp.ok) throw new Error("couldn't download it (" + resp.status + ")");
+      const file = new File([await resp.blob()], "oil-rocks-2026-10-17.tif");
+      status("reading the radar image...");
+      current = await loadTiff(file);
+      run();
+    } catch (err) {
+      console.error(err);
+      status("Couldn't load the example: " + err.message);
+    }
+  });
+
+  // drop area: drag a file onto it, or click to choose. same idea is used for photos further down
+  window.wireDrop = function (zone, input) {
+    ["dragenter", "dragover"].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove("over"); }));
+    zone.addEventListener("drop", e => {
+      if (!e.dataTransfer.files.length) return;
+      input.files = e.dataTransfer.files;
+      input.dispatchEvent(new Event("change"));
+    });
+  };
+  wireDrop($("drop"), $("file"));
+
   $("file").addEventListener("change", async e => {
     const f = e.target.files[0];
     if (!f) return;
@@ -116,8 +144,22 @@
     }
   });
 
+  // the radar-file reader is 300 KB, so it is only downloaded when someone actually opens a radar file
+  let geotiffPromise = null;
+  function loadGeoTIFF() {
+    if (typeof GeoTIFF !== "undefined") return Promise.resolve();
+    if (!geotiffPromise) geotiffPromise = new Promise((ok, fail) => {
+      const s = document.createElement("script");
+      s.src = "web/vendor/geotiff.js";
+      s.onload = ok;
+      s.onerror = () => { geotiffPromise = null; fail(new Error("couldn't load the radar file reader, check your internet and try again")); };
+      document.head.appendChild(s);
+    });
+    return geotiffPromise;
+  }
+
   async function loadTiff(file) {
-    if (typeof GeoTIFF === "undefined") throw new Error("GeoTIFF library didn't load (check internet).");
+    await loadGeoTIFF();
     const tiff = await GeoTIFF.fromArrayBuffer(await file.arrayBuffer());
     const image = await tiff.getImage();
     let w = image.getWidth(), h = image.getHeight();
