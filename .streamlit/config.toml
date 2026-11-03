@@ -1,8 +1,8 @@
-# same look as the website: cool ink grey, red = the colour we draw around oil
+# same look as the website: navy, blue for actions
 [theme]
-base = "light"
-primaryColor = "#b8321f"
-backgroundColor = "#f5f7fa"
-secondaryBackgroundColor = "#eceff4"
-textColor = "#111827"
+base = "dark"
+primaryColor = "#5ea6ff"
+backgroundColor = "#060c1c"
+secondaryBackgroundColor = "#0c1530"
+textColor = "#eaf0ff"
 font = "sans serif"
