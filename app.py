@@ -32,6 +32,9 @@ st.markdown("""
 .block-container {padding-top: 1.6rem; padding-bottom: 2rem;}
 h1 {margin-bottom: 0 !important;}
 div[data-testid="stMetricValue"] {font-size: 1.7rem;}
+/* round every corner: pictures, maps, boxes */
+img, iframe, canvas, [data-testid="stExpander"], [data-testid="stAlert"],
+[data-testid="stFileUploaderDropzone"] {border-radius: 16px !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -77,6 +80,7 @@ def on_place_change():
 # ---------------- header ----------------
 st.title("OceanEye")
 st.caption("Spotting oil spills at sea with free Sentinel-1 radar images · YCL 2026 · Water Security")
+st.markdown("[Back to the OceanEye website](https://vivan-cpu.github.io/oceaneye/)")
 
 tab_scan, tab_ground, tab_how = st.tabs(["Scan the sea", "Camera & photo check", "How it works"])
 
@@ -150,7 +154,7 @@ with tab_scan:
                            "Add CDSE_CLIENT_ID and CDSE_CLIENT_SECRET in the app's Secrets. "
                            "Test scene and upload still work.")
             st.selectbox("Jump to", list(PLACES.keys()), key="place", on_change=on_place_change)
-            st.caption(PLACES[ss.place]["note"] + "  \nOr draw your own box on the map with the ▢ tool.")
+            st.caption("Or draw your own box on the map with the ▢ tool.")
 
             c1, c2 = st.columns(2)
             c1.date_input("From", key="d_from")
