@@ -25,7 +25,6 @@ likely each one is to really be oil, and shows them on a map with their size in 
 Why radar and not normal photos? Radar works through clouds and at night. During monsoon
 (when the Kerala ship sank in 2025) normal satellite photos are mostly just clouds.
 
-There is also a physical model (`hardware/ripple_tank/`) that shows the science on a table.
 
 **Camera & photo check.** A second tab checks water from the ground with a phone or laptop camera, a photo,
 or a phone's light sensor (Phyphox app). Stage 1 (rules) finds dark or rainbow-coloured patches. Stage 2 (a small
@@ -51,7 +50,6 @@ crude_detect.py      camera/photo detection: stage 1 rules + stage 2 AI
 train_model.py       trains the AI (makes oil_model.pkl + web/oil_model.json for the website)
 web/ground-core.js   the camera/photo check rewritten in javascript (same maths as crude_detect.py)
 web/ground.js        the website's "Check from the ground" section
-hardware/            ripple tank model (ESP32 code + build guide)
 docs/                how it works, sources, video plan
 cache/               downloaded images get saved here
 ```

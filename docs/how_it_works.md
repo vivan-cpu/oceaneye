@@ -75,8 +75,7 @@ Score ≥4 = likely oil, 2-3 = possible, below 2 = probably look-alike.
      kept 3 dB. Our guess: the heavy fuel oil (mazut) mixed into the water and sank instead of making a thin
      smooth film, which is what radar sees best. **Good thing to say honestly in the interview.**
    - Still to try: MSC ELSA 3 off Kerala, 1 June 2025.
-3. **Ripple tank**: clean vs oil vs no-wind, 5 tries each. _(fill in your table)_
-4. **Talking to people**: _(fill in - see video plan for ideas)_
+3. **Talking to people**: _(fill in - see video plan for ideas)_
 
 ## Checking from the ground (camera and photo check)
 
@@ -120,7 +119,7 @@ That's our next step.
 that students can do a basic version with free data and a laptop, and it could help NGOs, fishing
 co-operatives or schools keep watch on their own coast.
 
-**How much did it cost?** Data and software are free. Ripple tank ~₹1,300.
+**How much did it cost?** Data, software and hosting are all free.
 
 **What's the minimum spill you can see?** At 40 m pixels and 0.05 km² minimum, roughly a patch
 200 m × 250 m. At 20 m pixels you can go smaller but it uses more quota.

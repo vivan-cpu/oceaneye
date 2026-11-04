@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OceanEye - YCL 2026 problem statement</title>
+<style>
+@font-face { font-family: "Plex"; font-weight: 400; src: url("../../web/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Plex"; font-weight: 500; src: url("../../web/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Plex"; font-weight: 600; src: url("../../web/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "PlexMono"; font-weight: 400; src: url("../../web/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); }
+
+@page { size: A4; margin: 0; }
+:root {
+  --navy: #060c1c; --card: #0c1530; --raised: #142046;
+  --ink: #0e1a3a; --ink-2: #3d4b6b; --muted: #5d6a89;
+  --paper: #ffffff; --tint: #eef2fb; --line: #d5dcee;
+  --blue: #2563c9; --sky: #5ea6ff; --red: #c4361f;
+  --sans: "Plex", system-ui, sans-serif; --mono: "PlexMono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font: 400 10.5pt/1.55 var(--sans); color: var(--ink); background: var(--paper); }
+
+.page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; break-after: page; }
+.page:last-child { page-break-after: auto; break-after: auto; }
+
+/* ---------- cover ---------- */
+.cover { background: linear-gradient(#0a1534, var(--navy) 55%); color: #eaf0ff; padding: 22mm 20mm 0; }
+.cover .kicker { font: 500 9.5pt var(--sans); color: #8fa0c6; margin: 0 0 14mm; }
+.cover h1 { font: 500 34pt/1.08 var(--sans); letter-spacing: -.02em; margin: 0 0 7mm; max-width: 150mm; }
+.cover .sub { font-size: 13pt; line-height: 1.5; color: #b6c3e2; max-width: 130mm; margin: 0 0 10mm; }
+.meta { display: grid; grid-template-columns: auto 1fr; gap: 2mm 8mm; font-size: 9.5pt; color: #b6c3e2; margin: 0; }
+.meta dt { color: #8fa0c6; } .meta dd { margin: 0; color: #eaf0ff; }
+
+/* faux browser window, runs off the bottom edge */
+.win { position: absolute; left: 20mm; right: 20mm; top: 150mm; bottom: -6mm; background: var(--navy); border: 1px solid rgba(160,190,255,.22); border-radius: 14px 14px 0 0; overflow: hidden; }
+.win .bar { height: 11mm; display: flex; align-items: center; gap: 3mm; padding: 0 5mm; background: #0a1330; border-bottom: 1px solid rgba(160,190,255,.14); }
+.win .dots { display: flex; gap: 2mm; } .win .dots i { width: 2.6mm; height: 2.6mm; border-radius: 50%; background: #25325c; }
+.win .url { flex: 1; max-width: 90mm; margin-left: 4mm; height: 6mm; border-radius: 3mm; background: #121c3f; color: #8fa0c6; font: 400 7.5pt/6mm var(--mono); padding: 0 3.5mm; }
+.win .body { padding: 8mm 7mm 0; }
+.win .copy { display: grid; grid-template-columns: 1fr auto; gap: 8mm; align-items: end; margin-bottom: 6mm; }
+.win .copy p { margin: 0; max-width: 95mm; }
+.win h2 { font: 500 17pt/1.1 var(--sans); letter-spacing: -.02em; margin: 0 0 3mm; color: #eaf0ff; }
+.win p { font-size: 8pt; line-height: 1.5; color: #b6c3e2; margin: 0 0 4mm; }
+.win .btn { display: inline-block; font: 500 7.5pt/1 var(--sans); padding: 2.4mm 4.5mm; border-radius: 999px; background: var(--sky); color: #06102a; }
+.win .img { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(160,190,255,.2); }
+.win .img img { display: block; width: 100%; }
+.win .img img + img { position: absolute; inset: 0; }
+.tag { position: absolute; font: 500 6.5pt/1 var(--mono); color: #fff; background: #b8321f; padding: 1.4mm 2.4mm; border-radius: 999px; }
+
+/* ---------- content pages ---------- */
+.inner { padding: 18mm 20mm 16mm; height: 100%; display: flex; flex-direction: column; }
+.run { display: flex; justify-content: space-between; font: 400 8pt var(--mono); color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 3mm; margin-bottom: 9mm; }
+h2.s { display: flex; align-items: baseline; gap: 4mm; font: 500 18pt/1.2 var(--sans); letter-spacing: -.01em; color: var(--ink); margin: 0 0 4mm; }
+h2.s .n { font: 400 10pt var(--mono); color: var(--blue); }
+section { margin: 0 0 9mm; }
+p { margin: 0 0 3mm; max-width: 150mm; }
+ul { margin: 0; padding-left: 5mm; max-width: 155mm; }
+li { margin: 0 0 2.4mm; padding-left: 1mm; }
+li::marker { color: var(--blue); }
+b { font-weight: 600; }
+.q { font: 500 12.5pt/1.4 var(--sans); color: var(--ink); background: var(--tint); border-radius: 14px; padding: 5mm 6mm; margin: 4mm 0 0; max-width: none; }
+
+.how { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; margin: 5mm 0 0; }
+.how div { background: var(--tint); border-radius: 14px; padding: 4.5mm 5mm; font-size: 9pt; line-height: 1.45; }
+.how b { display: block; font-family: var(--mono); font-weight: 400; font-size: 8pt; color: var(--blue); margin-bottom: 1.5mm; }
+
+.shot { margin: 5mm 0 0; background: var(--navy); border-radius: 14px; overflow: hidden; border: 1px solid #1a2548; }
+.shot .bar { height: 8mm; display: flex; align-items: center; gap: 3mm; padding: 0 4mm; background: #0a1330; }
+.shot .bar i { width: 2.2mm; height: 2.2mm; border-radius: 50%; background: #25325c; }
+.shot .bar span { margin-left: 3mm; font: 400 7pt var(--mono); color: #8fa0c6; }
+.shot img { display: block; width: 100%; }
+figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 2.5mm; }
+
+.rt { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3.5mm; margin: 4mm 0 0; padding: 0; list-style: none; max-width: none; }
+.rt li { background: var(--tint); border-radius: 14px; padding: 4mm 5mm; margin: 0; font-size: 9.5pt; line-height: 1.45; }
+.rt li b { display: block; font: 400 8pt var(--mono); color: var(--blue); margin-bottom: 1mm; }
+.foot { margin-top: auto; font-size: 8pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 3mm; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<div class="page cover">
+  <p class="kicker">Young Creators League 2026 &nbsp;/&nbsp; Problem statement &nbsp;/&nbsp; Theme: Water Security</p>
+  <h1>OceanEye: spotting oil spills at sea with free radar satellite images</h1>
+  <p class="sub">A free tool that lets fishing co-operatives, schools and small port offices watch their own coast, through clouds and at night.</p>
+  <dl class="meta">
+    <dt>Team</dt><dd>Rian Palan (team leader), Nivaan Alex (presenter), Vivan Sojitra (researcher)</dd>
+    <dt>School</dt><dd>The Galaxy School, Wadi, Rajkot</dd>
+    <dt>Mentor</dt><dd>Toral Dwivedi</dd>
+    <dt>Application</dt><dd>YCL/D2026/0537</dd>
+  </dl>
+
+  <div class="win">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">vivan-cpu.github.io/oceaneye</div></div>
+    <div class="body">
+      <h2>Finding oil spills at sea in free radar images</h2>
+      <div class="copy">
+        <p>Radar sees through clouds and at night, when normal photos can't. OceanEye marks the patches of sea that are smoother than they should be and scores how likely each one is to be oil.</p>
+        <span class="btn">Open the full app</span>
+      </div>
+      <div class="img">
+        <img src="../../web/img/hero_radar.jpg" alt="">
+        <img src="../../web/img/hero_detections.png" alt="">
+        <span class="tag" style="left:34%;top:78%">#5 likely oil, 7.7 km&sup2;</span>
+        <span class="tag" style="left:3%;top:68%">#1 likely oil, score 5</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="inner">
+    <div class="run"><span>OceanEye</span><span>Problem statement</span></div>
+
+    <section>
+      <h2 class="s"><span class="n">01</span>Selected theme</h2>
+      <p><b>Water Security.</b> Clean coastal and ocean water is part of water security. Oil in the sea poisons the water that fish, coral, mangroves and coastal communities depend on.</p>
+    </section>
+
+    <section>
+      <h2 class="s"><span class="n">02</span>Problem identified</h2>
+      <p>Oil spills at sea are hard to find quickly. Finding a spill early decides how much damage it does, but the usual tools have gaps. Ordinary satellite photos need daylight and a clear sky. Aircraft and ships can only search a small area and are expensive to send. So a spill can spread for a long time before anyone knows where it is.</p>
+      <p class="q">Our question: can a student team find oil spills using only free satellite data, free software and a laptop?</p>
+    </section>
+
+    <section>
+      <h2 class="s"><span class="n">03</span>Background and research</h2>
+      <ul>
+        <li><b>A real case from India.</b> On 25 May 2025 the container ship MSC ELSA 3 sank about 14 nautical miles off Alappuzha, Kerala, with around 84 tonnes of diesel and 367 tonnes of fuel oil on board. It was monsoon season, so normal satellite photos were mostly cloud and the Coast Guard had to send aircraft to look for the slick.</li>
+        <li><b>Not only accidents.</b> A lot of oil at sea comes from ships illegally washing out their tanks, often at night and far from shore, where nobody sees it.</li>
+        <li><b>Close to us.</b> Gujarat has India's longest coastline. The Gulf of Kutch, about 100 km from Rajkot, has some of the country's biggest oil terminals and tanker routes, right next to the Marine National Park with coral reefs and mangroves.</li>
+        <li><b>An old observation.</b> Benjamin Franklin noticed in 1773 that a spoonful of oil calmed the ripples over a large part of a windy pond in London.</li>
+      </ul>
+      <div class="how">
+        <div><b>1 / Wind</b>Wind makes small ripples a few centimetres long. They scatter radar back to the satellite, so normal sea looks grey.</div>
+        <div><b>2 / Oil</b>Oil forms a thin film that flattens the ripples. Smooth water acts like a mirror and bounces the beam away.</div>
+        <div><b>3 / Dark</b>Almost no echo returns, so oil looks dark, usually a few decibels darker than the sea around it.</div>
+      </div>
+    </section>
+
+    <div class="foot"><span>Sentinel-1 is run by the European Space Agency. Its images are free through Copernicus.</span><span>2</span></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="inner">
+    <div class="run"><span>OceanEye</span><span>Problem statement</span></div>
+
+    <section>
+      <h2 class="s"><span class="n">03</span>Background and research, continued</h2>
+      <ul>
+        <li><b>Look-alikes.</b> Calm water, rain cells, shadows from land and algae can also look dark. A detector has to say how sure it is and warn when the sea is too calm to trust. Existing systems such as EMSA CleanSeaNet in Europe and INCOIS in India show that satellite oil detection works, but they are run by large agencies.</li>
+        <li><b>What we built to learn about it.</b> A Python program that downloads a Sentinel-1 image for any area and date, hides land, compares each patch of sea with the water around it, and scores how likely each dark patch is to be oil. We tested it on a real image of the Oil Rocks oil field in the Caspian Sea (17 October 2026) and on a simulated scene where we know the right answer.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="s"><span class="n">04</span>People affected</h2>
+      <ul>
+        <li><b>Coastal fishing families.</b> Oil can shut fishing for weeks. They lose income first and have the least to fall back on.</li>
+        <li><b>People who work on the coast:</b> fish sellers, boat owners and tourism workers.</li>
+        <li><b>Marine life:</b> fish, birds, coral and mangroves, which are slow to recover.</li>
+        <li><b>Port officials, Coast Guard teams, NGOs and local authorities,</b> who need to know where a spill is before they can respond.</li>
+        <li><b>Everyone downstream,</b> since seafood and clean beaches are shared resources.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="s"><span class="n">05</span>Why it matters</h2>
+      <p>The sooner a spill is located, the smaller the area that needs cleaning and the less oil reaches the shore. Illegal dumping is also much easier to stop when it can be seen and recorded. At the moment, only large agencies have regular satellite watching. A free tool that a fishing co-operative, a school or a small port office can use puts that capability in the hands of the people living next to the sea. It fits Water Security directly, because clean water and healthy seas are what coastal livelihoods depend on.</p>
+    </section>
+
+    <div class="foot"><span>OceanEye, YCL 2026</span><span>3</span></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="inner">
+    <div class="run"><span>OceanEye</span><span>Problem statement</span></div>
+
+    <section>
+      <h2 class="s"><span class="n">06</span>Proposed solution</h2>
+      <p>OceanEye is a free website and app. You pick an area of sea and a date. It downloads that day's Sentinel-1 radar image, hides land, finds dark patches that could be oil, gives each one a score, and shows them on a map with their size in km&sup2;. Results can be exported for Google Earth or QGIS.</p>
+      <ul>
+        <li>It works through clouds and at night because it uses radar, not normal photos.</li>
+        <li>Every result says why it was flagged (how dark, how long and thin, how sharp the edges are). A person always checks a result before anything is reported.</li>
+        <li>It warns when the sea is too calm to trust, because calm water also looks dark.</li>
+      </ul>
+    </section>
+
+    <section>
+      <ul>
+        <li><b>A second check from the ground.</b> Using a phone camera, a photo or a phone's light sensor, a small AI model looks for oil sheen, and the result can be compared with what the satellite saw at the same place. Honest limits: it was trained on openly licensed photos (70 patches of oil), found about half of the oil on photos it had not seen, and has not been tested on real spills at sea.</li>
+        <li>Everything runs on free services, so the cost to a user is zero.</li>
+      </ul>
+      <figure class="shot">
+        <div class="bar"><i></i><i></i><i></i><span>oceaneye-ycl.streamlit.app</span></div>
+        <img src="../../web/img/oilrocks_2026-10-17_dark.png" alt="">
+      </figure>
+      <figcaption>The app's result on a real radar image (Oil Rocks, Caspian Sea, 17 October 2026): dark patches marked and scored.</figcaption>
+    </section>
+
+    <div class="foot"><span>OceanEye, YCL 2026</span><span>4</span></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="inner">
+    <div class="run"><span>OceanEye</span><span>Problem statement</span></div>
+
+    <section>
+      <h2 class="s"><span class="n">07</span>Technology and prototype</h2>
+      <p><b>Software prototype, working now.</b> A Python program using Sentinel-1 data from Copernicus. It removes radar speckle with a Lee filter, hides land, compares each pixel with the sea around it (about 3 km), marks patches at least 3 dB darker, and scores each patch by contrast, shape and edge sharpness. It runs as a demo in the browser on our website and as a full Streamlit app.</p>
+      <p><b>Functional prototype, working now.</b> The website and app are the prototype. Anyone can open them, pick an area and a date, and get real results from real Sentinel-1 images. A second part checks water from the ground, using the camera of a phone or laptop, an uploaded photo, or a phone's light sensor through the free Phyphox app, and compares the spot with what the satellite saw within 5 km.</p>
+      <ul class="rt">
+        <li><b>Software</b>Python, free Sentinel-1 data from Copernicus, free hosting on GitHub Pages and Streamlit Cloud.</li>
+        <li><b>Satellite check</b>Dark patches found by rules, scored for contrast, shape and edge sharpness.</li>
+        <li><b>Camera check</b>Rules find dark and rainbow patches, then a small trained model scores each one. It runs in the browser, so photos are never uploaded.</li>
+        <li><b>Phone light sensor</b>A sudden change in reflected light, read through Phyphox, can be a sign of oil on the surface.</li>
+      </ul>
+      <p style="margin-top:4mm">We have not built a physical model, and we say so. Everything above runs today and can be tried by anyone with a link.</p>
+    </section>
+
+    <div class="foot"><span>Website: vivan-cpu.github.io/oceaneye &nbsp;&nbsp; App: oceaneye-ycl.streamlit.app</span><span>5</span></div>
+  </div>
+</div>
+
+</body>
+</html>

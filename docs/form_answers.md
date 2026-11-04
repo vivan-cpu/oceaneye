@@ -34,8 +34,8 @@ if a spill like that could be found even through monsoon clouds, using only free
 OceanEye is a website/app where you pick an area of sea and a date. It downloads that day's free
 Sentinel-1 radar image from the European Space Agency (Copernicus), finds dark patches that could be
 oil, gives each patch a score for how likely it is to really be oil, and shows them on a map with their
-size in km². We also built a tabletop ripple tank model that shows the same science: a fan makes
-waves, a laser acts as the radar, and a light sensor acts as the satellite's antenna.
+size in km². A second tool checks water from the ground with a phone camera, a photo or a phone's light
+sensor, using a small AI model, and can be compared with what the satellite saw at the same place.
 Website: https://vivan-cpu.github.io/oceaneye/ [add the Streamlit app link once it is live]
 
 **What solution are you proposing?**
@@ -53,22 +53,22 @@ signal back and the sea looks grey (Bragg scattering). Oil makes a thin film tha
 Smooth water reflects the beam away like a mirror, so oil looks dark, usually 3-10 dB darker than the sea
 around it. Our Python program removes radar "speckle" with a Lee filter, hides land, compares each pixel
 with the sea around it (about 3 km), marks patches at least 3 dB darker, and then scores each patch by
-contrast, shape and edge sharpness. The ripple tank uses an ESP32, a fan, a laser and an LDR to show the
-same effect.
+contrast, shape and edge sharpness. The camera check finds dark and rainbow-coloured patches and
+then a small AI model scores each one.
 
 **Innovation Factor - What makes your solution unique?**
 
 Systems like this already exist (EMSA CleanSeaNet in Europe, INCOIS in India), but they are run by big
 agencies. Ours uses only free satellite data and free hosting and runs in a browser, so anyone can check
-their own coast. We used clear rules instead of a black-box AI, so we can explain every decision, and
-it warns when the sea is too calm to trust (calm water also looks dark). The ripple tank lets people see
-and touch the physics that the satellite uses.
+their own coast. The satellite stage uses clear rules, so we can explain every decision, and
+it warns when the sea is too calm to trust (calm water also looks dark). The camera check adds a small AI
+model and says honestly how well it works.
 
 ---
 
 ## Other things still empty on the form
 
-- Project & team pictures: [photos of the ripple tank, the app on a laptop, the team]
+- Project & team pictures: [screenshots of the website and app, the team]
 - Video submission link: [after we make the 3-minute video - see video_plan.md]
 - School nomination: nominator name, designation, email, phone + nomination letter [ask school]
 - School LinkedIn / Instagram links (optional)
